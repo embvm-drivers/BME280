@@ -68,7 +68,7 @@ void BME280ArduinoI2CRead(uint8_t register_addr, uint8_t* data_out, size_t lengt
 void setup()
 {
 	Serial.begin(115200);
-	Serial.println("Reading basic values from BME280");
+	Serial.println("Reading basic values from BME280, refactored edition");
 
 	Wire.begin();
 
