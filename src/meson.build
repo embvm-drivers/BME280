@@ -7,5 +7,5 @@
 
 
 # subdir('driver')
-# subdir('example-app')
 subdir('sparkfun-driver')
+subdir('example-app')

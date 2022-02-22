@@ -99,6 +99,13 @@ subdir('build/objcopy')
 #framework_host_include_dep = embvm_core_subproject.get_variable('framework_host_include_dep')
 #framework_native_include_dep = embvm_core_subproject.get_variable('framework_native_include_dep')
 
+if meson.is_cross_build() and host_machine.cpu_family() == 'avr' and meson.is_subproject() == false
+	arduinocore = subproject('arduinocore-avr')
+	arduinocore_dep = arduinocore.get_variable('arduinocore_dep')
+	arduinocore_main_dep = arduinocore.get_variable('arduinocore_main_dep')
+	arduinocore_wire_dep = arduinocore.get_variable('arduinocore_wire_dep')
+endif
+
 #######################
 # Process Source Tree #
 #######################
