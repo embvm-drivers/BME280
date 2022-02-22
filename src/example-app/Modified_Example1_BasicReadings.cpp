@@ -32,7 +32,7 @@ void BME280ArduinoI2CRead(uint8_t register_addr, uint8_t* data_out, size_t lengt
 						  void* private_data);
 
 BME280 mySensor(BME280ArduinoI2CWrite, BME280ArduinoI2CRead, I2C_MODE,
-				static_cast<void*>(&BME280_I2C_Addr_7bit));
+				reinterpret_cast<void*>(&BME280_I2C_Addr_7bit));
 
 void BME280ArduinoI2CWrite(uint8_t register_addr, uint8_t data, void* private_data)
 {
