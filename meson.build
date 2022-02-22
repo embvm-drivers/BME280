@@ -99,6 +99,13 @@ subdir('build/objcopy')
 #framework_host_include_dep = embvm_core_subproject.get_variable('framework_host_include_dep')
 #framework_native_include_dep = embvm_core_subproject.get_variable('framework_native_include_dep')
 
+# This dep needs to be refactored - currently pulls in emvbm, and it will fail to compile for cross buidl with AVR
+# because libc does not have AVR support. We do not need the embvm-core for this project at this time.
+if meson.is_cross_build() == false
+	aardvark_driver_subproject = subproject('aardvark')
+	aardvark_vendor_native_driver_dep = aardvark_driver_subproject.get_variable('aardvark_vendor_native_driver_dep')
+endif
+
 if meson.is_cross_build() and host_machine.cpu_family() == 'avr' and meson.is_subproject() == false
 	arduinocore = subproject('arduinocore-avr')
 	arduinocore_dep = arduinocore.get_variable('arduinocore_dep')

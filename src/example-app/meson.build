@@ -1,15 +1,19 @@
-example_app_sources = [
-	'main.cpp'
-]
+####################
+# Aardvark Example #
+####################
 
-#executable('example_app_native',
-#	example_app_sources,
-#	dependencies: [
-		#driver_lib_native_dep,
-#	],
-#	install: false,
-#	native: true
-#)
+# TODO: Can undo once I fix the aardvark dependency
+if meson.is_cross_build() == false
+	executable('aardvark_example',
+		files('AardvarkExample.cpp'),
+		dependencies: [
+			bme280_driver_dep,
+			aardvark_vendor_native_driver_dep
+		],
+		install: false,
+		native: true
+	)
+endif
 
 ##################
 # ATMega Example #
