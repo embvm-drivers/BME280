@@ -1,12 +1,6 @@
-# Driver Repository Template
+# BME280 Driver
 
-Provide an introductory paragraph, describing:
-
-* What your project does
-* Why people should consider using your project
-* Link to project home page
-
-Search the `meson.build` files for `TODO` comments that you need to handle when adjusting this template for your project.
+BME280 driver implementation designed according to [Design for Change](https://embeddedartistry.com/course/designing-embedded-systems-for-change/) principles, allowing it to work with any system by merely supplying the necessary abstraction implementations.
 
 ## Table of Contents
 
@@ -32,15 +26,9 @@ Search the `meson.build` files for `TODO` comments that you need to handle when 
 
 # About the Project
 
-Here you can provide more details about the project
-* What features does your project provide?
-* Short motivation for the project? (Don't be too long winded)
-* Links to the project site
+This project provides a portable and reusable BME280 driver that is not tied to any particular ecosystem.
 
-```
-Show some example code to describe what your project does
-Show some of your APIs
-```
+This repository, in addition to providing an actual driver, is also meant as a demonstration for our course [Designing Embedded Software for Change](https://embeddedartistry.com/course/designing-embedded-systems-for-change/). As such, we have refactored [Sparkfun's BME280 Library](https://github.com/sparkfun/SparkFun_BME280_Arduino_Library) for Arduino, as well as provided a driver implementation on top of [Bosch's BME280 driver](https://github.com/BoschSensortec/BME280_driver).
 
 **[Back to top](#table-of-contents)**
 
