@@ -5,6 +5,7 @@
 # 	application that you want to use to demonstrate/test functionality of the device.
 #	You do not have to stick to this structure!
 
-subdir('vendor')
-subdir('driver')
-subdir('example-app')
+
+# subdir('driver')
+# subdir('example-app')
+subdir('sparkfun-driver')

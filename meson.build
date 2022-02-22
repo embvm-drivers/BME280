@@ -1,4 +1,4 @@
-project('embvm-driver-template',
+project('BME280 Driver',
 	['c', 'cpp'],
 	default_options : [
 		'warning_level=3',
@@ -12,7 +12,7 @@ project('embvm-driver-template',
 		'cpp_std=c++17', 'build.cpp_std=c++17',
 	],
 	meson_version: '>=0.56.0',
-	version: '0.9'
+	version: '0.1'
 )
 
 ################################
