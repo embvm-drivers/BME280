@@ -3,8 +3,8 @@
  * See LICENSE file for licensing information.
  */
 
-#include <driver.hpp>
 #include <cstdio>
+#include <driver.hpp>
 
 int main(void)
 {
