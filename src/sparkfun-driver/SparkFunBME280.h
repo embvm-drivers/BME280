@@ -20,8 +20,8 @@ Distributed as-is; no warranty is given.
 #ifndef __BME280_H__
 #define __BME280_H__
 
-#include <cstddef>
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
 
 enum bme280_comm_mode
 {

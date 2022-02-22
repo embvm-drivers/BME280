@@ -21,8 +21,8 @@ Distributed as-is; no warranty is given.
 // See SparkFunBME280.h for additional topology notes.
 
 #include "SparkFunBME280.h"
-#include <cassert>
-#include <cstring>
+#include <assert.h>
+#include <string.h>
 #include <math.h>
 
 //****************************************************************************//
