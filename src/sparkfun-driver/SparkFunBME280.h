@@ -1,28 +1,18 @@
 /******************************************************************************
-SparkFunBME280.h
+This implementation was derived from SparkFunBME280.h
+This implementation deviates from the original by demonstrating design
+for change principles, and breaks the dependency on the Arduino SDK.
+
+Original:
 BME280 Arduino and Teensy Driver
 Marshall Taylor @ SparkFun Electronics
 May 20, 2015
 https://github.com/sparkfun/BME280_Breakout
 
-Resources:
-Uses Wire.h for i2c operation
-Uses SPI.h for SPI operation
-
-Development environment specifics:
-Arduino IDE 1.6.4
-Teensy loader 1.23
-
 This code is released under the [MIT License](http://opensource.org/licenses/MIT).
 Please review the LICENSE.md file included with this example. If you have any questions
 or concerns with licensing, please contact techsupport@sparkfun.com.
 Distributed as-is; no warranty is given.
-
-TODO:
-	roll library ver to 2.0
-	remove hard wire.
-	write escalating examples
-
 
 ******************************************************************************/
 
@@ -30,37 +20,9 @@ TODO:
 #ifndef __BME280_H__
 #define __BME280_H__
 
-#if(ARDUINO >= 100)
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
-
-#include <SPI.h>
-#include <Wire.h>
-
-// Uncomment the following line to enable software I2C
-// You will need to have the SoftwareWire library installed
-//#include <SoftwareWire.h> //SoftwareWire by Testato. Installed from library manager.
-
+//TODO: Change so this isn't compile-time
 #define I2C_MODE 0
 #define SPI_MODE 1
-
-#ifndef BME280_SPI_CLOCK
-#ifdef ARDUINO_ARCH_ESP32
-#define BME280_SPI_CLOCK 1000000
-#else
-#define BME280_SPI_CLOCK 500000
-#endif
-#endif
-
-#ifndef BME280_SPI_MODE
-#define BME280_SPI_MODE SPI_MODE0
-#endif
-
-#define NO_WIRE 0
-#define HARD_WIRE 1
-#define SOFT_WIRE 2
 
 #define MODE_SLEEP 0b00
 #define MODE_FORCED 0b01
