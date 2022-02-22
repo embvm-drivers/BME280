@@ -19,6 +19,7 @@
   SCL -> A5
 */
 
+#include <Arduino.h>
 #include <Wire.h>
 #include "SparkFunBME280.h"
 
