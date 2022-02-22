@@ -20,9 +20,17 @@ Distributed as-is; no warranty is given.
 #ifndef __BME280_H__
 #define __BME280_H__
 
+#ifdef __AVR
+// avr-gcc does not supply the C++ versions of these headers
+#include <stddef.h>
+#include <stdint.h>
+#else
+#include <cstddef>
 #include <cstdint>
+#endif
 
-enum bme280_comm_mode {
+enum bme280_comm_mode
+{
 	I2C_MODE = 0,
 	SPI_MODE
 };
@@ -145,6 +153,11 @@ struct BME280_SensorMeasurements
 class BME280
 {
   public:
+	using write_func = void (*)(uint8_t /*register*/, uint8_t /*data*/, void* /*private data*/);
+	using read_func = void (*)(uint8_t /*register*/, uint8_t* /*data_out*/, size_t /*length*/,
+							   void* /*private data*/);
+
+  public:
 	// settings
 	BME280_SensorSettings settings;
 	SensorCalibration calibration;
@@ -152,12 +165,13 @@ class BME280
 
 	// Constructor generates default BME280_SensorSettings.
 	//(over-ride after construction if desired)
-	BME280(void);
+	BME280(write_func write_implementation, read_func read_implementation,
+		   bme280_comm_mode comm_mode = I2C_MODE, void* private_data = nullptr);
 	//~BME280() = default;
 
 	// Call to apply BME280_SensorSettings.
 	// This also gets the SensorCalibration constants
-	uint8_t begin(bme280_comm_mode = I2C_MODE);
+	bool begin();
 
 	uint8_t getMode(void); // Get the current mode: sleep, forced, or normal
 	void setMode(uint8_t mode); // Set the current mode
@@ -176,7 +190,7 @@ class BME280
 
 	// Software reset routine
 	void reset(void);
-	void readAllMeasurements(BME280_SensorMeasurements* measurements, byte tempScale = 0);
+	void readAllMeasurements(BME280_SensorMeasurements* measurements, uint8_t tempScale = 0);
 
 	// Returns the values as floats.
 	float readFloatPressure(void);
@@ -217,6 +231,9 @@ class BME280
 	void readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
 
 	float _referencePressure = 101325.0; // Default but is changeable
+	write_func write_ = nullptr;
+	read_func read_ = nullptr;
+	void* private_data_ = nullptr;
 };
 
 #endif // End of __BME280_H__ definition check
