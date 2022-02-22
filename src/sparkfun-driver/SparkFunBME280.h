@@ -20,14 +20,19 @@ Distributed as-is; no warranty is given.
 #ifndef __BME280_H__
 #define __BME280_H__
 
-//TODO: Change so this isn't compile-time
-#define I2C_MODE 0
-#define SPI_MODE 1
+#include <cstdint>
 
+enum bme280_comm_mode {
+	I2C_MODE = 0,
+	SPI_MODE
+};
+
+// TODO: make an enumeration
 #define MODE_SLEEP 0b00
 #define MODE_FORCED 0b01
 #define MODE_NORMAL 0b11
 
+// TODO: move to a separate header, only available for implementation
 // Register names:
 #define BME280_DIG_T1_LSB_REG 0x88
 #define BME280_DIG_T1_MSB_REG 0x89
@@ -89,12 +94,8 @@ Distributed as-is; no warranty is given.
 //
 struct BME280_SensorSettings
 {
-  public:
-	// Main Interface and mode settings
-	uint8_t commInterface;
-	uint8_t I2CAddress;
-	uint8_t chipSelectPin;
-	SPISettings spiSettings{BME280_SPI_CLOCK, MSBFIRST, BME280_SPI_MODE};
+	// Main Interface selection
+	bme280_comm_mode commInterface;
 
 	// Deprecated settings
 	uint8_t runMode;
@@ -110,7 +111,6 @@ struct BME280_SensorSettings
 // by the driver as measurements are being taking
 struct SensorCalibration
 {
-  public:
 	uint16_t dig_T1;
 	int16_t dig_T2;
 	int16_t dig_T3;
@@ -135,7 +135,6 @@ struct SensorCalibration
 
 struct BME280_SensorMeasurements
 {
-  public:
 	float temperature;
 	float pressure;
 	float humidity;
@@ -158,13 +157,7 @@ class BME280
 
 	// Call to apply BME280_SensorSettings.
 	// This also gets the SensorCalibration constants
-	uint8_t begin(void);
-	bool beginSPI(uint8_t csPin); // Communicate using SPI
-	bool beginI2C(TwoWire& wirePort = Wire); // Called when user provides Wire port
-
-#ifdef SoftwareWire_h
-	bool beginI2C(SoftwareWire& wirePort); // Called when user provides a softwareWire port
-#endif
+	uint8_t begin(bme280_comm_mode = I2C_MODE);
 
 	uint8_t getMode(void); // Get the current mode: sleep, forced, or normal
 	void setMode(uint8_t mode); // Set the current mode
@@ -174,9 +167,6 @@ class BME280
 	void setHumidityOverSample(uint8_t overSampleAmount); // Set the humidity sample mode
 	void setStandbyTime(uint8_t timeSetting); // Set the standby time between measurements
 	void setFilter(uint8_t filterSetting); // Set the filter
-
-	void setI2CAddress(uint8_t i2caddress); // Set the address the library should use to
-											// communicate. Use if address jumper is closed (0x76).
 
 	void setReferencePressure(
 		float refPressure); // Allows user to set local sea level reference pressure
@@ -225,13 +215,6 @@ class BME280
 	uint8_t checkSampleValue(uint8_t userValue); // Checks for valid over sample values
 	void readTempCFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
 	void readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
-
-	uint8_t _wireType = HARD_WIRE; // Default to Wire.h
-	TwoWire* _hardPort = NO_WIRE; // The generic connection to user's chosen I2C hardware
-
-#ifdef SoftwareWire_h
-	SoftwareWire* _softPort = NO_WIRE; // Or, the generic connection to software wire port
-#endif
 
 	float _referencePressure = 101325.0; // Default but is changeable
 };
