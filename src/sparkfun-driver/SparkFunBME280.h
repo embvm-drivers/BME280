@@ -165,7 +165,7 @@ class BME280
 
 	// Call to apply BME280_SensorSettings.
 	// This also gets the SensorCalibration constants
-	uint8_t begin();
+	bool begin();
 
 	uint8_t getMode(void); // Get the current mode: sleep, forced, or normal
 	void setMode(uint8_t mode); // Set the current mode

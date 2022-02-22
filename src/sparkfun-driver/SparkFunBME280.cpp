@@ -22,8 +22,8 @@ Distributed as-is; no warranty is given.
 
 #include "SparkFunBME280.h"
 #include <assert.h>
-#include <string.h>
 #include <math.h>
+#include <string.h>
 
 //****************************************************************************//
 //
@@ -60,7 +60,7 @@ BME280::BME280(BME280::write_func write_implementation, BME280::read_func read_i
 //  configure before calling .begin();
 //
 //****************************************************************************//
-uint8_t BME280::begin()
+bool BME280::begin()
 {
 	// Check communication with IC before anything else
 	uint8_t chipID = readRegister(BME280_CHIP_ID_REG); // Should return 0x60 or 0x58
@@ -114,7 +114,9 @@ uint8_t BME280::begin()
 
 	setMode(MODE_NORMAL); // Go!
 
-	return (readRegister(BME280_CHIP_ID_REG)); // Should return 0x60
+	uint8_t chip_id = readRegister(BME280_CHIP_ID_REG); // Should return 0x60
+
+	return (chip_id == 0x58) || (chip_id == 0x60); // BMP = 0x58, BME = 0x60
 }
 
 // Set the mode bits in the ctrl_meas register
