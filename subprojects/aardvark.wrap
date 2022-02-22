@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://github.com/embvm-drivers/aardvark
+revision = master
+clone-recursive = true
