@@ -1,28 +1,18 @@
 /******************************************************************************
-SparkFunBME280.h
+This implementation was derived from SparkFunBME280.h
+This implementation deviates from the original by demonstrating design
+for change principles, and breaks the dependency on the Arduino SDK.
+
+Original:
 BME280 Arduino and Teensy Driver
 Marshall Taylor @ SparkFun Electronics
 May 20, 2015
 https://github.com/sparkfun/BME280_Breakout
 
-Resources:
-Uses Wire.h for i2c operation
-Uses SPI.h for SPI operation
-
-Development environment specifics:
-Arduino IDE 1.6.4
-Teensy loader 1.23
-
 This code is released under the [MIT License](http://opensource.org/licenses/MIT).
 Please review the LICENSE.md file included with this example. If you have any questions
 or concerns with licensing, please contact techsupport@sparkfun.com.
 Distributed as-is; no warranty is given.
-
-TODO:
-	roll library ver to 2.0
-	remove hard wire.
-	write escalating examples
-
 
 ******************************************************************************/
 
@@ -30,42 +20,19 @@ TODO:
 #ifndef __BME280_H__
 #define __BME280_H__
 
-#if(ARDUINO >= 100)
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
+#include <cstdint>
 
-#include <SPI.h>
-#include <Wire.h>
+enum bme280_comm_mode {
+	I2C_MODE = 0,
+	SPI_MODE
+};
 
-// Uncomment the following line to enable software I2C
-// You will need to have the SoftwareWire library installed
-//#include <SoftwareWire.h> //SoftwareWire by Testato. Installed from library manager.
-
-#define I2C_MODE 0
-#define SPI_MODE 1
-
-#ifndef BME280_SPI_CLOCK
-#ifdef ARDUINO_ARCH_ESP32
-#define BME280_SPI_CLOCK 1000000
-#else
-#define BME280_SPI_CLOCK 500000
-#endif
-#endif
-
-#ifndef BME280_SPI_MODE
-#define BME280_SPI_MODE SPI_MODE0
-#endif
-
-#define NO_WIRE 0
-#define HARD_WIRE 1
-#define SOFT_WIRE 2
-
+// TODO: make an enumeration
 #define MODE_SLEEP 0b00
 #define MODE_FORCED 0b01
 #define MODE_NORMAL 0b11
 
+// TODO: move to a separate header, only available for implementation
 // Register names:
 #define BME280_DIG_T1_LSB_REG 0x88
 #define BME280_DIG_T1_MSB_REG 0x89
@@ -127,12 +94,8 @@ TODO:
 //
 struct BME280_SensorSettings
 {
-  public:
-	// Main Interface and mode settings
-	uint8_t commInterface;
-	uint8_t I2CAddress;
-	uint8_t chipSelectPin;
-	SPISettings spiSettings{BME280_SPI_CLOCK, MSBFIRST, BME280_SPI_MODE};
+	// Main Interface selection
+	bme280_comm_mode commInterface;
 
 	// Deprecated settings
 	uint8_t runMode;
@@ -148,7 +111,6 @@ struct BME280_SensorSettings
 // by the driver as measurements are being taking
 struct SensorCalibration
 {
-  public:
 	uint16_t dig_T1;
 	int16_t dig_T2;
 	int16_t dig_T3;
@@ -173,7 +135,6 @@ struct SensorCalibration
 
 struct BME280_SensorMeasurements
 {
-  public:
 	float temperature;
 	float pressure;
 	float humidity;
@@ -196,13 +157,7 @@ class BME280
 
 	// Call to apply BME280_SensorSettings.
 	// This also gets the SensorCalibration constants
-	uint8_t begin(void);
-	bool beginSPI(uint8_t csPin); // Communicate using SPI
-	bool beginI2C(TwoWire& wirePort = Wire); // Called when user provides Wire port
-
-#ifdef SoftwareWire_h
-	bool beginI2C(SoftwareWire& wirePort); // Called when user provides a softwareWire port
-#endif
+	uint8_t begin(bme280_comm_mode = I2C_MODE);
 
 	uint8_t getMode(void); // Get the current mode: sleep, forced, or normal
 	void setMode(uint8_t mode); // Set the current mode
@@ -212,9 +167,6 @@ class BME280
 	void setHumidityOverSample(uint8_t overSampleAmount); // Set the humidity sample mode
 	void setStandbyTime(uint8_t timeSetting); // Set the standby time between measurements
 	void setFilter(uint8_t filterSetting); // Set the filter
-
-	void setI2CAddress(uint8_t i2caddress); // Set the address the library should use to
-											// communicate. Use if address jumper is closed (0x76).
 
 	void setReferencePressure(
 		float refPressure); // Allows user to set local sea level reference pressure
@@ -263,13 +215,6 @@ class BME280
 	uint8_t checkSampleValue(uint8_t userValue); // Checks for valid over sample values
 	void readTempCFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
 	void readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
-
-	uint8_t _wireType = HARD_WIRE; // Default to Wire.h
-	TwoWire* _hardPort = NO_WIRE; // The generic connection to user's chosen I2C hardware
-
-#ifdef SoftwareWire_h
-	SoftwareWire* _softPort = NO_WIRE; // Or, the generic connection to software wire port
-#endif
 
 	float _referencePressure = 101325.0; // Default but is changeable
 };
