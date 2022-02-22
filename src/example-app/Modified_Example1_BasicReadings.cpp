@@ -6,6 +6,9 @@
   License: This code is public domain but you buy me a beer if you use this and we meet someday
   (Beerware license).
 
+  ***NOTE:***
+  This example has been slightly modified to work with the refactored BME280 code.
+
   Feel like supporting our work? Buy a board from SparkFun!
   https://www.sparkfun.com/products/14348 - Qwiic Combo Board
   https://www.sparkfun.com/products/13676 - BME280 Breakout Board
@@ -21,20 +24,58 @@
   SCL -> A5
 */
 
-#include <Wire.h>
-
 #include "SparkFunBME280.h"
+#include <Arduino.h>
+#include <Wire.h>
+#include <assert.h>
 
-BME280 mySensor;
+uint8_t BME280_I2C_Addr_7bit = 0x76;
+void BME280ArduinoI2CWrite(uint8_t register_addr, uint8_t data, void* private_data);
+void BME280ArduinoI2CRead(uint8_t register_addr, uint8_t* data_out, size_t length,
+						  void* private_data);
+
+BME280 mySensor(BME280ArduinoI2CWrite, BME280ArduinoI2CRead, I2C_MODE,
+				reinterpret_cast<void*>(&BME280_I2C_Addr_7bit));
+
+void BME280ArduinoI2CWrite(uint8_t register_addr, uint8_t data, void* private_data)
+{
+	assert(private_data);
+
+	uint8_t address = *static_cast<uint8_t*>(private_data);
+
+	Wire.beginTransmission(address);
+	Wire.write(register_addr);
+	Wire.write(data);
+	Wire.endTransmission();
+}
+
+void BME280ArduinoI2CRead(uint8_t register_addr, uint8_t* data_out, size_t length,
+						  void* private_data)
+{
+	assert(data_out && private_data);
+
+	uint8_t address = *static_cast<uint8_t*>(private_data);
+	uint8_t i = 0;
+
+	Wire.beginTransmission(address);
+	Wire.write(register_addr);
+	Wire.endTransmission();
+	Wire.requestFrom(address, length);
+	// Loop is to handle the case where device may send less than requested
+	while(Wire.available() and i < length)
+	{
+		data_out[i++] = Wire.read();
+	}
+}
 
 void setup()
 {
 	Serial.begin(115200);
-	Serial.println("Reading basic values from BME280");
+	Serial.println("Reading basic values from BME280, refactored edition");
 
 	Wire.begin();
 
-	if(mySensor.beginI2C() == false) // Begin communication over I2C
+	if(mySensor.begin() == false)
 	{
 		Serial.println("The sensor did not respond. Please check wiring.");
 		while(1)
