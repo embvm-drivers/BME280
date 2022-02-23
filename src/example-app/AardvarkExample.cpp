@@ -61,7 +61,6 @@ void aardvark_i2c_read(uint8_t reg_addr, uint8_t* data,
     assert(r == AA_OK);
 }
 
-
 int main(void)
 {
 	printf("Running BME280 example with the Aardvark I2C driver\n");
