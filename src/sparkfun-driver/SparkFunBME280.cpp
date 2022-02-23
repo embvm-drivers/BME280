@@ -21,9 +21,16 @@ Distributed as-is; no warranty is given.
 // See SparkFunBME280.h for additional topology notes.
 
 #include "SparkFunBME280.h"
+#ifdef __AVR
+// avr-gcc does not seem to supply the C++ versions of these headers
 #include <assert.h>
 #include <math.h>
 #include <string.h>
+#else
+#include <cassert>
+#include <cmath>
+#include <cstring>
+#endif
 
 //****************************************************************************//
 //

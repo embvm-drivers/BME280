@@ -20,8 +20,14 @@ Distributed as-is; no warranty is given.
 #ifndef __BME280_H__
 #define __BME280_H__
 
+#ifdef __AVR
+// avr-gcc does not supply the C++ versions of these headers
 #include <stddef.h>
 #include <stdint.h>
+#else
+#include <cstddef>
+#include <cstdint>
+#endif
 
 enum bme280_comm_mode
 {
