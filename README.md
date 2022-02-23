@@ -34,7 +34,11 @@ This repository, in addition to providing an actual driver, is also meant as a d
 
 # Project Status
 
-Describe the current release and any notes about the current state of the project. Examples: currently compiles on your host machine, but is not cross-compiling for ARM, APIs are not set, feature not implemented, etc.
+This project is currently under development as part of our [Designing Embedded Software for Change](https://embeddedartistry.com/course/designing-embedded-systems-for-change/) course.
+
+- We have adjusted the [Sparkfun BME280 driver](https://github.com/sparkfun/SparkFun_BME280_Arduino_Library), removing its dependency on the Arduino SDK. 
+    + An example application is provided for the ATMega256 (`make CROSS=avr:arduino_mega`) demonstrating that the library still works on Arduino
+    + An example application is provided using the [Aardvark USB adapter](https://github.com/embvm-drivers/aardvark) (only compiles in non-cross-compilation mode for now due to an embvm-core issue with AVR)
 
 **[Back to top](#table-of-contents)**
 
@@ -110,7 +114,7 @@ This project uses [`git-lfs`](https://git-lfs.github.com), so please install it 
 This project is hosted on GitHub. You can clone the project directly using this command:
 
 ```
-git clone --recursive git@github.com:embeddedartistry/project-skeleton.git
+git clone --recursive https://github.com/embeddedartistry/project-skeleton
 ```
 
 If you don't clone recursively, be sure to run the following command in the repository or your build will fail:
@@ -210,20 +214,6 @@ The following meson project options can be set for this library when creating th
 * `enable-pedantic-error`: Turn on `pedantic` warnings and errors
 * `hide-unimplemented-libc-apis`: Hides the header definitions for functions which are not actually implemented
 * `enable-gnu-extensions` will enable GNU libc extensions that are implemented in this library
-
-The following options can be used to configure `libc++` if used with this project:
-
-* `libcxx-use-compiler-rt`
-* `libcxx-use-llvm-libunwind`
-* `libcxx-thread-library`
-* `libcxx-has-external-thread-api`
-* `libcxx-build-external-thread-api`
-* `libcxx-enable-chrono`
-* `libcxx-enable-filesystem`
-* `libcxx-enable-stdinout`
-* `libcxx-default-newdelete`
-* `libcxx-silent-terminate`
-* `libcxx-monotonic-clock`
 
 Options can be specified using `-D` and the option name:
 
