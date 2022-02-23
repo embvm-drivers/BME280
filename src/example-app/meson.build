@@ -4,8 +4,18 @@
 
 # TODO: Can undo once I fix the aardvark dependency
 if meson.is_cross_build() == false
-	executable('aardvark_example',
-		files('AardvarkExample.cpp'),
+	executable('aardvark_i2c_example',
+		files('AardvarkI2CExample.cpp'),
+		dependencies: [
+			bme280_driver_dep,
+			aardvark_vendor_native_driver_dep
+		],
+		install: false,
+		native: true
+	)
+
+	executable('aardvark_spi_example',
+		files('AardvarkSPIExample.cpp'),
 		dependencies: [
 			bme280_driver_dep,
 			aardvark_vendor_native_driver_dep

@@ -69,7 +69,6 @@ int main(void)
 	bool initialized = mySensor.begin();
 	assert(initialized);
 
-	// TODO: keyboard termination support
 	int sample_count = 0;
 	while(sample_count++ < 20)
 	{
