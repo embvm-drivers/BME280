@@ -148,12 +148,86 @@ struct BME280_SensorMeasurements
 	float humidity;
 };
 
-// This is the main operational class of the driver.
-
+/** BME280 Driver Interface
+ *
+ * This driver supports both I2C and SPI communications. By default, the driver
+ * uses I2C, but this value can be overriden using the `comm_mode` argument in
+ * the constructor.
+ *
+ * To make this driver work, you need to implement a `write_func` and `read_func`
+ * that handles the data interactions between the BME280 driver and the underlying
+ * communication bus implementation. Please see the notes for those type definitions for mor
+ * information. These values are supplied to the driver during construction.
+ * Example implementations of these functions can be found in the src/app directory.
+ *
+ * Class usage pattern:
+ * 	- Construct the driver with a write_implementation, a read_implementation,
+ *    a desired communication mode, and optionally, private data to pass to your write/read
+ *  - Call begin() after the device has been powered on and the communication bus has been
+ *    initialized
+ *  - Change modes and/or read data as needed
+ *
+ * Notes for I2C communications:
+ * 	- Default 7-bit address is 0x77. 0x76 can also be used by tying SDO to GND
+ *  - Device supports speeds up to 3.4 MHz
+ *
+ * Notes SPI communications:
+ * 	- Configure the bus to use SPI mode 0, with MSB first
+ *  - Device supports both 3- and 4-wire SPI
+ *  - Device supports speeds up to 10 MHz
+ *
+ * For more information on this device, see the datasheet:
+ * 	https://cdn.sparkfun.com/assets/e/7/3/b/1/BME280_Datasheet.pdf
+ */
 class BME280
 {
   public:
+	/** Prototype for the driver's write function abstraction
+	 *
+	 * Users of this driver must supply an implementation for the write function, which is what
+	 * enables the BME280 driver to communicate through the underlying platform.
+	 *
+	 * @note Your driver may require sending a single buffer instead of multiple independent bytes.
+	 *  In this case, you can combine the two bytes into a single buffer for use with your driver.
+	 *
+	 * @pre Device is powered on
+	 * @pre begin() has been called
+	 * @post write operation has completed successfully
+	 *
+	 * @param register The register address to send to the device
+	 * @param data The data byte to send to the device
+	 * @param private_data A pointer to private data reserved for the implementor's use. Common
+	 * 	uses of this parameter are to store a `this` pointer for a particular class, a pointer
+	 *  to the I2C address for this device, a pointer to a GPIO line to be used for the CS pin
+	 */
 	using write_func = void (*)(uint8_t /*register*/, uint8_t /*data*/, void* /*private data*/);
+
+	/** Prototype for the driver's read function abstraction
+	 *
+	 * Users of this driver must supply an implementation for the read function, which is what
+	 * enables the BME280 driver to communicate through the underlying platform.
+	 *
+	 * @note This function is actually a mix of write/read: First you must send one byte (register
+	 * address) to the device, and then read the data.
+	 *  - For I2C, you will need to send the register in a write operation, and then follow that
+	 * with a read operation. A repeated start condition is valid here.
+	 *  - For SPI, your driver may let you send one byte and then switch to reading by sending 0x0.
+	 * 		Other SPI drivers may require you to combine the data into a single buffer, where the
+	 * first byte is the register address and the remaining bytes are 0x0. Total buffer size will be
+	 * length+1 in this scenario
+	 *
+	 * @pre Device is powered on
+	 * @pre begin() has been called
+	 * @post read operation has completed successfully, and the data is stored in data_out
+	 *
+	 *
+	 * @param register The register address to send to the device.
+	 * @param data_out Buffer used to store the returned data for the driver
+	 * @param length The amount of data to read from the device
+	 * @param private_data A pointer to private data reserved for the implementor's use. Common
+	 * 	uses of this parameter are to store a `this` pointer for a particular class, a pointer
+	 *  to the I2C address for this device, a pointer to a GPIO line to be used for the CS pin
+	 */
 	using read_func = void (*)(uint8_t /*register*/, uint8_t* /*data_out*/, size_t /*length*/,
 							   void* /*private data*/);
 
@@ -169,8 +243,21 @@ class BME280
 		   bme280_comm_mode comm_mode = I2C_MODE, void* private_data = nullptr);
 	//~BME280() = default;
 
-	// Call to apply BME280_SensorSettings.
-	// This also gets the SensorCalibration constants
+	/** Initialize the Device
+	 *
+	 * This function initializes the device, applies the sensor settings, and
+	 * retrieves the SensorCalibration constants from the device.
+	 *
+	 * @pre Before begin() is called, this driver assumes the following is true:
+	 * 	- The device is powered
+	 * 	- 2ms has elapsed between supplying power and calling begin()
+	 * 	- The communication bus has been properly configured and initialized
+	 *  - Valid  implementations of write_func and read_func have been supplied
+	 *
+	 * @returns
+	 * 	- true if the device was initialized and a valid chip ID was detected
+	 *  - false otherwise
+	 */
 	bool begin();
 
 	uint8_t getMode(void); // Get the current mode: sleep, forced, or normal
