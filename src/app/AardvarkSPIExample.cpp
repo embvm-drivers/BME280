@@ -59,7 +59,7 @@ void aardvark_spi_read(uint8_t reg_addr, uint8_t* data, size_t length, void* pri
 	// and write data buffers and read sizes, I do not understand, because the write length
 	// must match. So, we use a temporary internal buffer here to coerce the data
 	// into the necessary form for this API.
-#define INTERNAL_SPI_BUFFER_SIZE 10
+	constexpr size_t INTERNAL_SPI_BUFFER_SIZE=10;
 	static uint8_t internal_buffer[INTERNAL_SPI_BUFFER_SIZE];
 	assert(length + 1 < INTERNAL_SPI_BUFFER_SIZE);
 
