@@ -2,28 +2,25 @@
 # Aardvark Example #
 ####################
 
-# TODO: Can undo once I fix the aardvark dependency
-if meson.is_cross_build() == false
-	executable('aardvark_i2c_example',
-		files('AardvarkI2CExample.cpp'),
-		dependencies: [
-			sparkfun_bme280_driver_dep,
-			aardvark_vendor_native_driver_dep
-		],
-		install: false,
-		native: true
-	)
+executable('aardvark_i2c_example',
+	files('AardvarkI2CExample.cpp'),
+	dependencies: [
+		sparkfun_bme280_driver_dep,
+		aardvark_vendor_native_driver_dep
+	],
+	install: false,
+	native: true
+)
 
-	executable('aardvark_spi_example',
-		files('AardvarkSPIExample.cpp'),
-		dependencies: [
-			sparkfun_bme280_driver_dep,
-			aardvark_vendor_native_driver_dep
-		],
-		install: false,
-		native: true
-	)
-endif
+executable('aardvark_spi_example',
+	files('AardvarkSPIExample.cpp'),
+	dependencies: [
+		sparkfun_bme280_driver_dep,
+		aardvark_vendor_native_driver_dep
+	],
+	install: false,
+	native: true
+)
 
 ##################
 # ATMega Example #
