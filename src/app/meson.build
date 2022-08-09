@@ -7,7 +7,7 @@ if meson.is_cross_build() == false
 	executable('aardvark_i2c_example',
 		files('AardvarkI2CExample.cpp'),
 		dependencies: [
-			bme280_driver_dep,
+			sparkfun_bme280_driver_dep,
 			aardvark_vendor_native_driver_dep
 		],
 		install: false,
@@ -17,7 +17,7 @@ if meson.is_cross_build() == false
 	executable('aardvark_spi_example',
 		files('AardvarkSPIExample.cpp'),
 		dependencies: [
-			bme280_driver_dep,
+			sparkfun_bme280_driver_dep,
 			aardvark_vendor_native_driver_dep
 		],
 		install: false,
@@ -34,7 +34,7 @@ if meson.is_cross_build() and host_machine.cpu_family() == 'avr' and meson.is_su
 		sources: files('Modified_Example1_BasicReadings.cpp'),
 		dependencies:
 		[
-			bme280_driver_dep,
+			sparkfun_bme280_driver_dep,
 			arduinocore_main_dep,
 			arduinocore_wire_dep
 		],
