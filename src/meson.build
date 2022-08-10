@@ -1,4 +1,5 @@
-# subdir('driver')
-subdir('bosch-driver')
-subdir('sparkfun-driver')
+subdir('lib')
+subdir('drivers')
+subdir('virtual_devices')
+subdir('hw_platforms')
 subdir('app')
