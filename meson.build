@@ -113,6 +113,9 @@ if meson.is_cross_build() and host_machine.cpu_family() == 'avr' and meson.is_su
 	arduinocore_wire_dep = arduinocore.get_variable('arduinocore_wire_dep')
 endif
 
+c_interfaces = subproject('c-interfaces')
+c_virtual_device_intf_dep = c_interfaces.get_variable('c_virtual_device_intf_dep')
+
 #######################
 # Process Source Tree #
 #######################
