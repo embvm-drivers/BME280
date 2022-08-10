@@ -116,6 +116,9 @@ endif
 c_interfaces = subproject('c-interfaces')
 c_virtual_device_intf_dep = c_interfaces.get_variable('c_virtual_device_intf_dep')
 
+c_linked_list = subproject('c-linked-list')
+c_linked_list_dep = c_linked_list.get_variable('c_linked_list_dep')
+
 #######################
 # Process Source Tree #
 #######################
