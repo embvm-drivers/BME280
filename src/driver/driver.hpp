@@ -1,7 +1,5 @@
-/*
- * Copyright © 2021 Embedded Artistry LLC.
- * See LICENSE file for licensing information.
- */
+// SPDX-FileCopyrightText: © 2022 Embedded Artistry LLC <contact@embeddedartistry.com>
+// SPDX-License-Identifier: MIT
 
 #ifndef EXAMPLE_H_
 #define EXAMPLE_H_

@@ -1,7 +1,5 @@
-/*
- * Copyright © 2022 Embedded Artistry LLC.
- * See LICENSE file for licensing information.
- */
+// SPDX-FileCopyrightText: © 2022 Embedded Artistry LLC <contact@embeddedartistry.com>
+// SPDX-License-Identifier: MIT
 
 #include "SparkFunBME280.h"
 #include "aardvark.h"
