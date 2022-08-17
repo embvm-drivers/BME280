@@ -206,7 +206,7 @@ static int32_t compute_altitude(uint32_t pressure)
 	return (int32_t)working_altitude;
 }
 
-static void invoke_callbacks()
+static void invokeNewSampleCallbacks()
 {
 	BaroNewSampleCallbackNode* baro_node = NULL;
 	list_for_each_entry(baro_node, &baroSampleCbList, node)
@@ -224,6 +224,27 @@ static void invoke_callbacks()
 	list_for_each_entry(humidity_node, &humiditySampleCbList, node)
 	{
 		humidity_node->cb(latest_humidity);
+	}
+}
+
+static void invokeErrorCallbacks(void)
+{
+	BaroErrorCallbackNode* baro_node = NULL;
+	list_for_each_entry(baro_node, &baroErrorCbList, node)
+	{
+		baro_node->cb();
+	}
+
+	TempErrorCallbackNode* temp_node = NULL;
+	list_for_each_entry(temp_node, &tempErrorCbList, node)
+	{
+		temp_node->cb();
+	}
+
+	HumidityErrorCallbackNode* humidity_node = NULL;
+	list_for_each_entry(humidity_node, &humidityErrorCbList, node)
+	{
+		humidity_node->cb();
 	}
 }
 
@@ -275,11 +296,11 @@ static bool get_new_samples()
 		convert_and_cache_sensor_data(compensated_data.pressure, compensated_data.temperature,
 									  compensated_data.humidity);
 
-		invoke_callbacks();
+		invokeNewSampleCallbacks();
 	}
 	else
 	{
-		virtualBME280_IssueErrorNotifications();
+		invokeErrorCallbacks();
 	}
 
 	return r == BME280_OK;
@@ -445,25 +466,4 @@ BoschBME280VirtualInterfaces virtualBME280_initialize(void* const input_inst)
 	// - set up a timer to do the same thing
 
 	return (BoschBME280VirtualInterfaces){&temp0, &barometric0, &humidity0};
-}
-
-void virtualBME280_IssueErrorNotifications(void)
-{
-	BaroErrorCallbackNode* baro_node = NULL;
-	list_for_each_entry(baro_node, &baroErrorCbList, node)
-	{
-		baro_node->cb();
-	}
-
-	TempErrorCallbackNode* temp_node = NULL;
-	list_for_each_entry(temp_node, &tempErrorCbList, node)
-	{
-		temp_node->cb();
-	}
-
-	HumidityErrorCallbackNode* humidity_node = NULL;
-	list_for_each_entry(humidity_node, &humidityErrorCbList, node)
-	{
-		humidity_node->cb();
-	}
 }
