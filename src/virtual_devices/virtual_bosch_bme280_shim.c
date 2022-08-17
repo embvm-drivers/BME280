@@ -227,6 +227,40 @@ static void invoke_callbacks()
 	}
 }
 
+static void convert_and_cache_sensor_data(uint32_t pressure, int32_t temperature, uint32_t humidity)
+{
+#ifndef BME280_64BIT_ENABLE
+#error This conversion code is dependent on 64-bit output
+#endif
+
+#ifdef VIRTUAL_BME280_VERBOSE_SAMPLING_PRINTS
+	printf("Retrieved new data from sensors: %d (100 * °C), %u (1024 * %%RH), %u (100 * Pascal)\n",
+		   temperature, humidity, pressure);
+#endif
+
+	// correct from 100 * °C to fixed point Q7.8
+	// Surely this could be done more efficiently,
+	// but I would also likely modify the compensation code
+	// to return a more sensible value
+	latest_temperature = (int16_t)((temperature * (1 << 8)) / 100);
+
+	// convert from 1024 * % RH to integer %
+	// this would have worked well as UQ10 without any conversion,
+	// if you need that precision.
+	latest_humidity = (uint8_t)(humidity >> 10);
+
+	// correct from 100 * Pa to hPa with fixed point format UQ22.10;
+	latest_pressure = (uint32_t)(((uint64_t)pressure << 10) / 10000);
+	latest_altitude = compute_altitude(latest_pressure);
+
+#ifdef VIRTUAL_BME280_VERBOSE_SAMPLING_PRINTS
+	printf("Converted to: %d (°C in Q7.8), %d (%%RH, integral), %u (hPa, UQ22.10), %u (m, "
+		   "Q21.10)\n",
+		   latest_temperature, latest_humidity, latest_pressure, latest_altitude);
+	printf("Sampling time: %ld s\n", last_sampling_time);
+#endif
+}
+
 static bool get_new_samples()
 {
 	struct bme280_data compensated_data;
@@ -234,41 +268,12 @@ static bool get_new_samples()
 
 	if(r == BME280_OK)
 	{
-#ifndef BME280_64BIT_ENABLE
-#error This conversion code is dependent on 64-bit output
-#endif
-
-#ifdef VIRTUAL_BME280_VERBOSE_SAMPLING_PRINTS
-		printf(
-			"Retrieved new data from sensors: %d (100 * °C), %u (1024 * %%RH), %u (100 * Pascal)\n",
-			compensated_data.temperature, compensated_data.humidity, compensated_data.pressure);
-#endif
-
 		// This was successful, so we take the current timestamp in order to gate the next
 		// access of data from the sensor.
 		last_sampling_time = time(NULL);
 
-		// correct from 100 * °C to fixed point Q7.8
-		// Surely this could be done more efficiently,
-		// but I would also likely modify the compensation code
-		// to return a more sensible value
-		latest_temperature = (int16_t)((compensated_data.temperature * (1 << 8)) / 100);
-
-		// convert from 1024 * % RH to integer %
-		// this would have worked well as UQ10 without any conversion,
-		// if you need that precision.
-		latest_humidity = (uint8_t)(compensated_data.humidity >> 10);
-
-		// correct from 100 * Pa to hPa with fixed point format UQ22.10;
-		latest_pressure = (uint32_t)(((uint64_t)compensated_data.pressure << 10) / 10000);
-		latest_altitude = compute_altitude(latest_pressure);
-
-#ifdef VIRTUAL_BME280_VERBOSE_SAMPLING_PRINTS
-		printf("Converted to: %d (°C in Q7.8), %d (%%RH, integral), %u (hPa, UQ22.10), %u (m, "
-			   "Q21.10)\n",
-			   latest_temperature, latest_humidity, latest_pressure, latest_altitude);
-		printf("Sampling time: %ld s\n", last_sampling_time);
-#endif
+		convert_and_cache_sensor_data(compensated_data.pressure, compensated_data.temperature,
+									  compensated_data.humidity);
 
 		invoke_callbacks();
 	}
