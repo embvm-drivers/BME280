@@ -160,7 +160,7 @@ void hwPlatform_initialize()
 {
 	aardvark_initialize();
 	initialize_bme280();
-	BoschBME280VirtualInterfaces intf = initialize_bme280_virtual_devices(&bme280_inst);
+	BoschBME280VirtualInterfaces intf = virtualBME280_initialize(&bme280_inst);
 	temp0 = intf.temperature;
 	baro0 = intf.barometer;
 	humidity0 = intf.humidity;

@@ -16,7 +16,7 @@
  * The expected usage pattern is as follows:
  * - Hardware platform initialization configures the BME280 driver according to
  *   the application's needs
- * - Hardware platform invokes initialize_bme280_virtual_devices(), passing the
+ * - Hardware platform invokes virtualBME280_initialize(), passing the
  *   BME280 driver's instance structure as an input pointer
  * - The function returns a struct containing pointers to the virtual devices
  * - The hardware platform puts these virtual device pointers in the necessary
@@ -29,7 +29,7 @@
  * now it only supports one BME280 device in the system. To support multiple, this
  * basic approach would work, but you would need to duplicate the shim functions
  * by name to support the number of target implementations. You could add an index
- * input parameter to the initialize_bme280_virtual_devices() function so you can
+ * input parameter to the virtualBME280_initialize() function so you can
  * access the correct set. Or you could manage the allocated count internally,
  * storing associated instance pointers in an array or list, and having implementations
  * map to a particular index in the list (temp0 => inst[0], temp1 => inst[1]).
@@ -56,7 +56,7 @@ typedef struct
  * @returns a struct containing pointers to the corresponding virtual devices
  * that can be used by generic application code.
  */
-BoschBME280VirtualInterfaces initialize_bme280_virtual_devices(void* const input_inst);
+BoschBME280VirtualInterfaces virtualBME280_initialize(void* const input_inst);
 
 /** Invoke the registered error callbacks for the virtual devices
  *

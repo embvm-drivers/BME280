@@ -428,7 +428,7 @@ void temp0_unregisterErrorCb(const TemperatureErrorCb callback)
 
 #pragma mark - Public Interfaces -
 
-BoschBME280VirtualInterfaces initialize_bme280_virtual_devices(void* const input_inst)
+BoschBME280VirtualInterfaces virtualBME280_initialize(void* const input_inst)
 {
 	assert(input_inst);
 	our_bme280_inst = (struct bme280_dev*)input_inst;
