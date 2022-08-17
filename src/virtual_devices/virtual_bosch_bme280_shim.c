@@ -280,7 +280,7 @@ static void convert_and_cache_sensor_data(uint32_t pressure, int32_t temperature
 #endif
 }
 
-static bool get_new_samples()
+static bool getNewSamples()
 {
 	struct bme280_data compensated_data;
 	int r = bme280_get_sensor_data(BME280_ALL, &compensated_data, our_bme280_inst);
@@ -312,7 +312,7 @@ bool baro0_readPressure(uint32_t* const pressure)
 	if(new_sample_needed)
 	{
 		// If successful, callbacks are invoked here
-		samples_are_valid = get_new_samples();
+		samples_are_valid = getNewSamples();
 	}
 
 	if(samples_are_valid && pressure)
@@ -329,7 +329,7 @@ bool baro0_readAltitude(int32_t* const altitude)
 	if(new_sample_needed)
 	{
 		// If successful, callbacks are invoked here
-		samples_are_valid = get_new_samples();
+		samples_are_valid = getNewSamples();
 	}
 
 	if(samples_are_valid && altitude)
@@ -376,7 +376,7 @@ bool humidity0_readHumidity(uint8_t* const humidity)
 	if(new_sample_needed)
 	{
 		// If successful, callbacks are invoked here
-		samples_are_valid = get_new_samples();
+		samples_are_valid = getNewSamples();
 	}
 
 	if(samples_are_valid && humidity)
@@ -417,7 +417,7 @@ bool temp0_readTemperature(int16_t* const temperature)
 	if(new_sample_needed)
 	{
 		// If successful, callbacks are invoked here
-		samples_are_valid = get_new_samples();
+		samples_are_valid = getNewSamples();
 	}
 
 	if(samples_are_valid && temperature)
