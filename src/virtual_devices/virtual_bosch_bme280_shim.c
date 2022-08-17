@@ -272,6 +272,10 @@ static bool get_new_samples()
 
 		invoke_callbacks();
 	}
+	else
+	{
+		virtualBME280_IssueErrorNotifications();
+	}
 
 	return r == BME280_OK;
 }
@@ -436,4 +440,25 @@ BoschBME280VirtualInterfaces initialize_bme280_virtual_devices(void* const input
 	// - set up a timer to do the same thing
 
 	return (BoschBME280VirtualInterfaces){&temp0, &barometric0, &humidity0};
+}
+
+void virtualBME280_IssueErrorNotifications(void)
+{
+	BaroErrorCallbackNode* baro_node = NULL;
+	list_for_each_entry(baro_node, &baroErrorCbList, node)
+	{
+		baro_node->cb();
+	}
+
+	TempErrorCallbackNode* temp_node = NULL;
+	list_for_each_entry(temp_node, &tempErrorCbList, node)
+	{
+		temp_node->cb();
+	}
+
+	HumidityErrorCallbackNode* humidity_node = NULL;
+	list_for_each_entry(humidity_node, &humidityErrorCbList, node)
+	{
+		humidity_node->cb();
+	}
 }

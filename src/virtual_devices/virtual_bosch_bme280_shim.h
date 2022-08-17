@@ -58,4 +58,14 @@ typedef struct
  */
 BoschBME280VirtualInterfaces initialize_bme280_virtual_devices(void* const input_inst);
 
+/** Invoke the registered error callbacks for the virtual devices
+ *
+ * This call can be used to invoke all of the registered error callbacks for the
+ * BME280 virtual devices. This can be used by the hardware platform logic to
+ * notify listeners of errors that it detects.
+ *
+ * @post All callbacks will be invoked
+ */
+void virtualBME280_IssueErrorNotifications(void);
+
 #endif // VIRTUAL_BME280_SHIM
