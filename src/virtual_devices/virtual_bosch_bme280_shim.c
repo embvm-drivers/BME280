@@ -10,10 +10,11 @@
 #include <stdlib.h>
 #include <time.h>
 
-// STILL TO DO:
-// callback notifications
-// async support? reading on a thread vs using the intervals?
-// could show both implementations
+// NOTES:
+// - Error handling is not shown here
+// - Fetching new samples could be purely asynchronous if driven by a timer
+//   or thread, but this implementation requires someone to call readX() to
+//   trigger a new value.
 
 #pragma mark - Prototypes -
 
