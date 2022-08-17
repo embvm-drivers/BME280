@@ -113,14 +113,12 @@ typedef struct
 
 struct bme280_dev* our_bme280_inst = NULL;
 
-/// Current sea level pressure setting
-/// Defaults to 1013.25 hPa
-/// Internal storage: UQ22.10
-static uint32_t slp_ = 1037568;
+/// Internal storage format: UQ22.10
+static uint32_t slp_ = VIRTUAL_BME280_DEFAULT_SEA_LEVEL_PRESSURE_IN_HPA;
 /// Indicates whether the current cached BME280 samples are valid
 static bool samples_are_valid = false;
 static time_t last_sampling_time;
-static uint32_t sampling_interval_in_s = 60;
+static uint32_t sampling_interval_in_s = VIRTUAL_BME280_SAMPLE_INTERVAL_IN_S;
 static uint8_t latest_humidity = 0;
 static int16_t latest_temperature = 0;
 static uint32_t latest_pressure = 0;

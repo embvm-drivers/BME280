@@ -8,6 +8,21 @@
 #include <humidity_sensor.h>
 #include <temperature_sensor.h>
 
+/// This definition can be used to configure the sampling interval for the
+/// underlying virtual devices. New samples will only be retrieved after this
+/// number of seconds have passed.
+#ifndef VIRTUAL_BME280_SAMPLE_INTERVAL_IN_S
+#define VIRTUAL_BME280_SAMPLE_INTERVAL_IN_S 60
+#endif
+
+/// Default sea level pressure setting that is used in altitude calculations
+/// when SLP is not set by the application.
+/// Internal storage format is UQ22.10
+/// Defaults to 1013.25 hPa (1037568 in UQ22.10)
+#ifndef VIRTUAL_BME280_DEFAULT_SEA_LEVEL_PRESSURE_IN_HPA
+#define VIRTUAL_BME280_DEFAULT_SEA_LEVEL_PRESSURE_IN_HPA 1037568
+#endif
+
 /** @file Bosch BME280 Virtual Device Shims
  *
  * This module implements the temperature, pressure/altitude, and humidity
