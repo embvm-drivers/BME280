@@ -103,6 +103,7 @@ typedef struct
 				if(current_node->cb == cb_input)                  \
 				{                                                 \
 					list_del(&current_node->node);                \
+					free(current_node);                           \
 					break;                                        \
 				}                                                 \
 			}                                                     \
