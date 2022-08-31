@@ -1,5 +1,10 @@
 sparkfun_bme280_driver = static_library('sparkfun_bme280_driver',
 	sources: files('SparkFunBME280.cpp'),
+	c_args: [
+		'-Wno-old-style-cast',
+		'-Wno-sign-conversion',
+		'-Wno-shorten-64-to-32'
+	]
 )
 
 sparkfun_bme280_driver_dep = declare_dependency(
