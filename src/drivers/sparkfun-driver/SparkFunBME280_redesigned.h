@@ -277,7 +277,7 @@ class BME280
 
 	// Software reset routine
 	void reset(void);
-	void readAllMeasurements(BME280_SensorMeasurements* measurements, uint8_t tempScale = 0);
+	void readAllMeasurements(BME280_SensorMeasurements* measurements);
 
 	// Returns the values as floats.
 	float readFloatPressure(void);
@@ -290,8 +290,7 @@ class BME280
 
 	// Temperature related methods
 	void setTemperatureCorrection(float corr);
-	float readTempC(void);
-	float readTempF(void);
+	float readTemp(void);
 	float readTempFromBurst(uint8_t buffer[]);
 
 	// Dewpoint related methods
@@ -315,7 +314,6 @@ class BME280
   private:
 	uint8_t checkSampleValue(uint8_t userValue); // Checks for valid over sample values
 	void readTempCFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
-	void readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
 
 	/// Converts from the raw sensor output to target representation
 	/// @param[in] raw_input the value returned from the BME280 sensor

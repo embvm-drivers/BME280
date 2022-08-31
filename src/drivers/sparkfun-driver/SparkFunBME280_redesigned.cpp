@@ -301,21 +301,11 @@ void BME280::reset(void)
 //****************************************************************************//
 
 // Read all sensor registers as a burst. See BME280 Datasheet section 4. Data readout
-// tempScale = 0 for Celsius scale (default setting)
-// tempScale = 1 for Fahrenheit scale
-void BME280::readAllMeasurements(BME280_SensorMeasurements* measurements, uint8_t tempScale)
+void BME280::readAllMeasurements(BME280_SensorMeasurements* measurements)
 {
 	uint8_t dataBurst[8];
 	readRegisterRegion(dataBurst, BME280_MEASUREMENTS_REG, 8);
-
-	if(tempScale == 0)
-	{
-		readTempCFromBurst(dataBurst, measurements);
-	}
-	else
-	{
-		readTempFFromBurst(dataBurst, measurements);
-	}
+	readTempCFromBurst(dataBurst, measurements);
 	readFloatPressureFromBurst(dataBurst, measurements);
 	readFloatHumidityFromBurst(dataBurst, measurements);
 }
@@ -438,8 +428,8 @@ float BME280::readFloatAltitudeFeet(void)
 //****************************************************************************//
 float BME280::convertHumidity(int32_t raw_input)
 {
-	int32_t var1 var1 = (t_fine - ((int32_t)76800));
-	var1 = (((((adc_raw_input << 14) - (((int32_t)calibration.dig_H4) << 20) -
+	int32_t var1 = (t_fine - ((int32_t)76800));
+	var1 = (((((raw_input << 14) - (((int32_t)calibration.dig_H4) << 20) -
 			   (((int32_t)calibration.dig_H5) * var1)) +
 			  ((int32_t)16384)) >>
 			 15) *
@@ -486,7 +476,7 @@ void BME280::setTemperatureCorrection(float corr)
 	settings.tempCorrection = corr;
 }
 
-float BME280::readTempC(void)
+float BME280::readTemp(void)
 {
 	// Returns temperature in DegC, resolution is 0.01 DegC. Output value of “5123” equals 51.23
 	// DegC. t_fine carries fine temperature as global value
@@ -545,22 +535,6 @@ void BME280::readTempCFromBurst(uint8_t buffer[], BME280_SensorMeasurements* mea
 	measurements->temperature = readTempFromBurst(buffer);
 }
 
-float BME280::readTempF(void)
-{
-	float output = readTempC();
-	output = (output * 9) / 5 + 32;
-
-	return output;
-}
-
-void BME280::readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
-{
-	float output = readTempFromBurst(buffer);
-	output = (output * 9) / 5 + 32;
-
-	measurements->temperature = output;
-}
-
 //****************************************************************************//
 //
 //  Dew point Section
@@ -569,7 +543,7 @@ void BME280::readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements* mea
 // Returns Dew point in DegC
 double BME280::dewPointC(void)
 {
-	double celsius = readTempC();
+	double celsius = readTemp();
 	double humidity = readFloatHumidity();
 	// (1) Saturation Vapor Pressure = ESGG(T)
 	double RATIO = 373.15 / (273.15 + celsius);
