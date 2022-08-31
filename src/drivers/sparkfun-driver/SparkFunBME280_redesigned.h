@@ -318,6 +318,9 @@ class BME280
 	/// @returns pressure in Pascals (Pa)
 	float convertPressure(int32_t raw_input);
 
+	int32_t assembleRawTempPressure(uint8_t* bytes);
+	int32_t assembleRawHumidity(uint8_t* bytes);
+
 	write_func write_ = nullptr;
 	read_func read_ = nullptr;
 	void* private_data_ = nullptr;

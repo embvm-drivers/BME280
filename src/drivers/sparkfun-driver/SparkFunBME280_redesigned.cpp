@@ -346,17 +346,13 @@ float BME280::readFloatPressure(void)
 {
 	uint8_t buffer[3];
 	readRegisterRegion(buffer, BME280_PRESSURE_MSB_REG, 3);
-	int32_t adc_P =
-		((uint32_t)buffer[0] << 12) | ((uint32_t)buffer[1] << 4) | ((buffer[2] >> 4) & 0x0F);
-
+	int32_t adc_P = assembleRawTempPressure(buffer);
 	return convertPressure(adc_P);
 }
 
 void BME280::readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
 {
-	int32_t adc_P =
-		((uint32_t)buffer[0] << 12) | ((uint32_t)buffer[1] << 4) | ((buffer[2] >> 4) & 0x0F);
-
+	int32_t adc_P = assembleRawTempPressure(buffer);
 	measurements->pressure = convertPressure(adc_P);
 }
 
@@ -394,13 +390,13 @@ float BME280::readFloatHumidity(void)
 {
 	uint8_t buffer[2];
 	readRegisterRegion(buffer, BME280_HUMIDITY_MSB_REG, 2);
-	int32_t adc_H = ((uint32_t)buffer[0] << 8) | ((uint32_t)buffer[1]);
+	int32_t adc_H = assembleRawHumidity(buffer);
 	return convertHumidity(adc_H);
 }
 
 void BME280::readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
 {
-	int32_t adc_H = ((uint32_t)buffer[6] << 8) | ((uint32_t)buffer[7]);
+	int32_t adc_H = assembleRawHumidity(&buffer[6]);
 	measurements->humidity = convertHumidity(adc_H);
 }
 
@@ -440,17 +436,13 @@ float BME280::readTemp(void)
 {
 	uint8_t buffer[3];
 	readRegisterRegion(buffer, BME280_TEMPERATURE_MSB_REG, 3);
-	int32_t adc_T =
-		((uint32_t)buffer[0] << 12) | ((uint32_t)buffer[1] << 4) | ((buffer[2] >> 4) & 0x0F);
-
+	int32_t adc_T = assembleRawTempPressure(buffer);
 	return convertTemperature(adc_T);
 }
 
 void BME280::readTempFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
 {
-	int32_t adc_T =
-		((uint32_t)buffer[3] << 12) | ((uint32_t)buffer[4] << 4) | ((buffer[5] >> 4) & 0x0F);
-
+	int32_t adc_T = assembleRawTempPressure(&buffer[3]);
 	measurements->temperature = convertTemperature(adc_T);
 }
 
@@ -459,6 +451,16 @@ void BME280::readTempFromBurst(uint8_t buffer[], BME280_SensorMeasurements* meas
 //  Utility
 //
 //****************************************************************************//
+int32_t BME280::assembleRawTempPressure(uint8_t* bytes)
+{
+	return ((uint32_t)bytes[0] << 12) | ((uint32_t)bytes[1] << 4) | ((bytes[2] >> 4) & 0x0F);
+}
+
+int32_t BME280::assembleRawHumidity(uint8_t* bytes)
+{
+	return ((uint32_t)bytes[0] << 8) | ((uint32_t)bytes[1]);
+}
+
 void BME280::readRegisterRegion(uint8_t* outputPointer, uint8_t offset, uint8_t length)
 {
 	assert(read_);
