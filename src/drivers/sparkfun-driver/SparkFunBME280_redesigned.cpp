@@ -20,7 +20,7 @@ Distributed as-is; no warranty is given.
 ******************************************************************************/
 // See SparkFunBME280.h for additional topology notes.
 
-#include "SparkFunBME280.h"
+#include "SparkFunBME280_redesigned.h"
 #ifdef __AVR
 // avr-gcc does not seem to supply the C++ versions of these headers
 #include <assert.h>
@@ -436,17 +436,10 @@ float BME280::readFloatAltitudeFeet(void)
 //  Humidity Section
 //
 //****************************************************************************//
-float BME280::readFloatHumidity(void)
+float BME280::convertHumidity(int32_t raw_input)
 {
-	// Returns humidity in %RH as unsigned 32 bit integer in Q22. 10 format (22 integer and 10
-	// fractional bits). Output value of “47445” represents 47445/1024 = 46. 333 %RH
-	uint8_t buffer[2];
-	readRegisterRegion(buffer, BME280_HUMIDITY_MSB_REG, 2);
-	int32_t adc_H = ((uint32_t)buffer[0] << 8) | ((uint32_t)buffer[1]);
-
-	int32_t var1;
-	var1 = (t_fine - ((int32_t)76800));
-	var1 = (((((adc_H << 14) - (((int32_t)calibration.dig_H4) << 20) -
+	int32_t var1 var1 = (t_fine - ((int32_t)76800));
+	var1 = (((((adc_raw_input << 14) - (((int32_t)calibration.dig_H4) << 20) -
 			   (((int32_t)calibration.dig_H5) * var1)) +
 			  ((int32_t)16384)) >>
 			 15) *
@@ -461,33 +454,25 @@ float BME280::readFloatHumidity(void)
 	var1 = (var1 < 0 ? 0 : var1);
 	var1 = (var1 > 419430400 ? 419430400 : var1);
 
+	// At this point we have humidity in %RH as unsigned 32 bit integer in Q22.10 format
+	// (22 integer and 10 fractional bits).
+	// An Output value of “47445” represents 47445/1024 = 46.333 %RH
+	// The final step here is to perform this conversion.
 	return (float)(var1 >> 12) / 1024.0;
+}
+
+float BME280::readFloatHumidity(void)
+{
+	uint8_t buffer[2];
+	readRegisterRegion(buffer, BME280_HUMIDITY_MSB_REG, 2);
+	int32_t adc_H = ((uint32_t)buffer[0] << 8) | ((uint32_t)buffer[1]);
+	return convertHumidity(adc_H);
 }
 
 void BME280::readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
 {
-	// Set humidity in %RH as unsigned 32 bit integer in Q22. 10 format (22 integer and 10
-	// fractional bits). Output value of “47445” represents 47445/1024 = 46. 333 %RH
 	int32_t adc_H = ((uint32_t)buffer[6] << 8) | ((uint32_t)buffer[7]);
-
-	int32_t var1;
-	var1 = (t_fine - ((int32_t)76800));
-	var1 = (((((adc_H << 14) - (((int32_t)calibration.dig_H4) << 20) -
-			   (((int32_t)calibration.dig_H5) * var1)) +
-			  ((int32_t)16384)) >>
-			 15) *
-			(((((((var1 * ((int32_t)calibration.dig_H6)) >> 10) *
-				 (((var1 * ((int32_t)calibration.dig_H3)) >> 11) + ((int32_t)32768))) >>
-				10) +
-			   ((int32_t)2097152)) *
-				  ((int32_t)calibration.dig_H2) +
-			  8192) >>
-			 14));
-	var1 = (var1 - (((((var1 >> 15) * (var1 >> 15)) >> 7) * ((int32_t)calibration.dig_H1)) >> 4));
-	var1 = (var1 < 0 ? 0 : var1);
-	var1 = (var1 > 419430400 ? 419430400 : var1);
-
-	measurements->humidity = (float)(var1 >> 12) / 1024.0;
+	measurements->humidity = convertHumidity(adc_H);
 }
 
 //****************************************************************************//

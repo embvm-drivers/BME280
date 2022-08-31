@@ -317,6 +317,11 @@ class BME280
 	void readTempCFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
 	void readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
 
+	/// Converts from the raw sensor output to target representation
+	/// @param[in] raw_input the value returned from the BME280 sensor
+	/// @returns humidity in %RH
+	float convertHumidity(int32_t raw_input);
+
 	float _referencePressure = 101325.0; // Default but is changeable
 	write_func write_ = nullptr;
 	read_func read_ = nullptr;
