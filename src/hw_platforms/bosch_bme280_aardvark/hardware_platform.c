@@ -56,6 +56,7 @@ void aardvark_initialize()
 	int devices_found;
 	// Find the port instead of using the hard-wired one
 	devices_found = aa_find_devices(1, &devices);
+	assert(devices_found);
 	assert(false == (AA_PORT_NOT_FREE & devices)); // Otherwise port is in uses
 	handle_ = aa_open(devices);
 	assert(handle_ > 0); // could not find aardvark device
