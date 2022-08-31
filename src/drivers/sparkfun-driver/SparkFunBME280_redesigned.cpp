@@ -305,7 +305,7 @@ void BME280::readAllMeasurements(BME280_SensorMeasurements* measurements)
 {
 	uint8_t dataBurst[8];
 	readRegisterRegion(dataBurst, BME280_MEASUREMENTS_REG, 8);
-	readTempCFromBurst(dataBurst, measurements);
+	readTempFromBurst(dataBurst, measurements);
 	readFloatPressureFromBurst(dataBurst, measurements);
 	readFloatHumidityFromBurst(dataBurst, measurements);
 }
@@ -476,6 +476,27 @@ void BME280::setTemperatureCorrection(float corr)
 	settings.tempCorrection = corr;
 }
 
+float BME280::convertTemperature(int32_t raw_input)
+{
+	// By datasheet, calibrate
+	int64_t var1, var2;
+
+	var1 = ((((raw_input >> 3) - ((int32_t)calibration.dig_T1 << 1))) *
+			((int32_t)calibration.dig_T2)) >>
+		   11;
+	var2 = (((((raw_input >> 4) - ((int32_t)calibration.dig_T1)) *
+			  ((raw_input >> 4) - ((int32_t)calibration.dig_T1))) >>
+			 12) *
+			((int32_t)calibration.dig_T3)) >>
+		   14;
+	t_fine = var1 + var2;
+	float output = (t_fine * 5 + 128) >> 8;
+
+	output = output / 100 + settings.tempCorrection;
+
+	return output;
+}
+
 float BME280::readTemp(void)
 {
 	// Returns temperature in DegC, resolution is 0.01 DegC. Output value of “5123” equals 51.23
@@ -487,52 +508,15 @@ float BME280::readTemp(void)
 	int32_t adc_T =
 		((uint32_t)buffer[0] << 12) | ((uint32_t)buffer[1] << 4) | ((buffer[2] >> 4) & 0x0F);
 
-	// By datasheet, calibrate
-	int64_t var1, var2;
-
-	var1 =
-		((((adc_T >> 3) - ((int32_t)calibration.dig_T1 << 1))) * ((int32_t)calibration.dig_T2)) >>
-		11;
-	var2 = (((((adc_T >> 4) - ((int32_t)calibration.dig_T1)) *
-			  ((adc_T >> 4) - ((int32_t)calibration.dig_T1))) >>
-			 12) *
-			((int32_t)calibration.dig_T3)) >>
-		   14;
-	t_fine = var1 + var2;
-	float output = (t_fine * 5 + 128) >> 8;
-
-	output = output / 100 + settings.tempCorrection;
-
-	return output;
+	return convertTemperature(adc_T);
 }
 
-float BME280::readTempFromBurst(uint8_t buffer[])
+void BME280::readTempFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
 {
 	int32_t adc_T =
 		((uint32_t)buffer[3] << 12) | ((uint32_t)buffer[4] << 4) | ((buffer[5] >> 4) & 0x0F);
 
-	// By datasheet, calibrate
-	int64_t var1, var2;
-
-	var1 =
-		((((adc_T >> 3) - ((int32_t)calibration.dig_T1 << 1))) * ((int32_t)calibration.dig_T2)) >>
-		11;
-	var2 = (((((adc_T >> 4) - ((int32_t)calibration.dig_T1)) *
-			  ((adc_T >> 4) - ((int32_t)calibration.dig_T1))) >>
-			 12) *
-			((int32_t)calibration.dig_T3)) >>
-		   14;
-	t_fine = var1 + var2;
-	float output = (t_fine * 5 + 128) >> 8;
-
-	output = output / 100 + settings.tempCorrection;
-
-	return output;
-}
-
-void BME280::readTempCFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
-{
-	measurements->temperature = readTempFromBurst(buffer);
+	measurements->temperature = convertTemperature(adc_T);
 }
 
 //****************************************************************************//
