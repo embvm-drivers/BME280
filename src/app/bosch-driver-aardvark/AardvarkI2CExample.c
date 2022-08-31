@@ -23,6 +23,7 @@ void aardvark_initialize()
 	int devices_found;
 	// Find the port instead of using the hard-wired one
 	devices_found = aa_find_devices(1, &devices);
+	assert(devices_found);
 	assert(false == (AA_PORT_NOT_FREE & devices)); // Otherwise port is in uses
 	handle_ = aa_open(devices);
 	assert(handle_ > 0); // could not find aardvark device
@@ -85,7 +86,7 @@ void delay_us(uint32_t period, void* intf_ptr)
 
 void print_sensor_data(struct bme280_data* comp_data)
 {
-	printf("%ld, %ld, %ld\r\n", comp_data->temperature, comp_data->pressure, comp_data->humidity);
+	printf("%d, %u, %i\r\n", comp_data->temperature, comp_data->pressure, comp_data->humidity);
 }
 
 int main(void)
@@ -121,7 +122,7 @@ int main(void)
 	r = bme280_set_sensor_settings(settings_sel, &dev);
 	r = bme280_set_sensor_mode(BME280_NORMAL_MODE, &dev);
 
-	printf("Temperature (100 * °C), Pressure (100 * Pascal), Humidity (1024 * % RH)\r\n");
+	printf("Temperature (100 * °C), Pressure (100 * Pascal), Humidity (1024 * %% RH)\r\n");
 	while(1)
 	{
 		/* Delay while the sensor completes a measurement */
