@@ -318,6 +318,11 @@ class BME280
 	/// @returns temperature in °C
 	float convertTemperature(int32_t raw_input);
 
+	/// Converts from the raw sensor output to pressure
+	/// This routine performs compensation for temperature, as described in the datasheet.
+	/// @returns pressure in Pascals (Pa)
+	float convertPressure(int32_t raw_input);
+
 	write_func write_ = nullptr;
 	read_func read_ = nullptr;
 	void* private_data_ = nullptr;

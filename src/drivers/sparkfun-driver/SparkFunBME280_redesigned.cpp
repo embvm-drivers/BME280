@@ -315,16 +315,8 @@ void BME280::readAllMeasurements(BME280_SensorMeasurements* measurements)
 //  Pressure Section
 //
 //****************************************************************************//
-float BME280::readFloatPressure(void)
+float BME280::convertPressure(int32_t raw_input)
 {
-	// Returns pressure in Pa as unsigned 32 bit integer in Q24.8 format (24 integer bits and 8
-	// fractional bits). Output value of “24674867” represents 24674867/256 = 96386.2 Pa = 963.862
-	// hPa
-	uint8_t buffer[3];
-	readRegisterRegion(buffer, BME280_PRESSURE_MSB_REG, 3);
-	int32_t adc_P =
-		((uint32_t)buffer[0] << 12) | ((uint32_t)buffer[1] << 4) | ((buffer[2] >> 4) & 0x0F);
-
 	int64_t var1, var2, p_acc;
 	var1 = ((int64_t)t_fine) - 128000;
 	var2 = var1 * var1 * (int64_t)calibration.dig_P6;
@@ -337,46 +329,35 @@ float BME280::readFloatPressure(void)
 	{
 		return 0; // avoid exception caused by division by zero
 	}
-	p_acc = 1048576 - adc_P;
+	p_acc = 1048576 - raw_input;
 	p_acc = (((p_acc << 31) - var2) * 3125) / var1;
 	var1 = (((int64_t)calibration.dig_P9) * (p_acc >> 13) * (p_acc >> 13)) >> 25;
 	var2 = (((int64_t)calibration.dig_P8) * p_acc) >> 19;
+
+	// Returns pressure in Pa as unsigned 32 bit integer in Q24.8 format (24 integer bits and 8
+	// fractional bits). Output value of “24674867” represents 24674867/256 = 96386.2 Pa = 963.862
+	// hPa
 	p_acc = ((p_acc + var1 + var2) >> 8) + (((int64_t)calibration.dig_P7) << 4);
 
-	return (float)p_acc / 256.0;
+	return (float)p_acc / 256.0f;
+}
+
+float BME280::readFloatPressure(void)
+{
+	uint8_t buffer[3];
+	readRegisterRegion(buffer, BME280_PRESSURE_MSB_REG, 3);
+	int32_t adc_P =
+		((uint32_t)buffer[0] << 12) | ((uint32_t)buffer[1] << 4) | ((buffer[2] >> 4) & 0x0F);
+
+	return convertPressure(adc_P);
 }
 
 void BME280::readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
 {
-	// Set pressure in Pa as unsigned 32 bit integer in Q24.8 format (24 integer bits and 8
-	// fractional bits). Output value of “24674867” represents 24674867/256 = 96386.2 Pa = 963.862
-	// hPa
-
 	int32_t adc_P =
 		((uint32_t)buffer[0] << 12) | ((uint32_t)buffer[1] << 4) | ((buffer[2] >> 4) & 0x0F);
 
-	int64_t var1, var2, p_acc;
-	var1 = ((int64_t)t_fine) - 128000;
-	var2 = var1 * var1 * (int64_t)calibration.dig_P6;
-	var2 = var2 + ((var1 * (int64_t)calibration.dig_P5) << 17);
-	var2 = var2 + (((int64_t)calibration.dig_P4) << 35);
-	var1 = ((var1 * var1 * (int64_t)calibration.dig_P3) >> 8) +
-		   ((var1 * (int64_t)calibration.dig_P2) << 12);
-	var1 = (((((int64_t)1) << 47) + var1)) * ((int64_t)calibration.dig_P1) >> 33;
-	if(var1 == 0)
-	{
-		measurements->pressure = 0; // avoid exception caused by division by zero
-	}
-	else
-	{
-		p_acc = 1048576 - adc_P;
-		p_acc = (((p_acc << 31) - var2) * 3125) / var1;
-		var1 = (((int64_t)calibration.dig_P9) * (p_acc >> 13) * (p_acc >> 13)) >> 25;
-		var2 = (((int64_t)calibration.dig_P8) * p_acc) >> 19;
-		p_acc = ((p_acc + var1 + var2) >> 8) + (((int64_t)calibration.dig_P7) << 4);
-
-		measurements->pressure = (float)p_acc / 256.0;
-	}
+	measurements->pressure = convertPressure(adc_P);
 }
 
 //****************************************************************************//
@@ -406,7 +387,7 @@ float BME280::convertHumidity(int32_t raw_input)
 	// (22 integer and 10 fractional bits).
 	// An Output value of “47445” represents 47445/1024 = 46.333 %RH
 	// The final step here is to perform this conversion.
-	return (float)(var1 >> 12) / 1024.0;
+	return (float)(var1 >> 12) / 1024.0f;
 }
 
 float BME280::readFloatHumidity(void)
