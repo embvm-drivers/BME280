@@ -26,3 +26,20 @@ float calculateAltitude(float pressure, float slp = 101325.0)
 	return (-44330.77f) *
 		   (pow((pressure / slp), 0.190263f) - 1.0f); // Corrected, see issue 30 (Sparkfun Repo)
 }
+
+// From Pavel-Sayekat: https://github.com/sparkfun/SparkFun_BME280_Breakout_Board/pull/6/files
+double calculateDewPoint(double temperature, double humidity)
+{
+	// (1) Saturation Vapor Pressure = ESGG(T)
+	double RATIO = 373.15 / (273.15 + temperature);
+	double RHS = -7.90298 * (RATIO - 1);
+	RHS += 5.02808 * log10(RATIO);
+	RHS += -1.3816e-7 * (pow(10, (11.344 * (1 - 1 / RATIO))) - 1);
+	RHS += 8.1328e-3 * (pow(10, (-3.49149 * (RATIO - 1))) - 1);
+	RHS += log10(1013.246);
+	// factor -3 is to adjust units - Vapor Pressure SVP * humidity
+	double VP = pow(10, RHS - 3) * humidity;
+	// (2) DEWPOINT = F(Vapor Pressure)
+	double T = log(VP / 0.61078); // temp var
+	return (241.88 * T) / (17.558 - T);
+}

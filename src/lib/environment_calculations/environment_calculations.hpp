@@ -11,4 +11,10 @@ float metersToFeet(float meters);
 /// @returns altitude in meters
 float calculateAltitude(float pressure, float slp = 101325.0);
 
+/// Calculate the dew point in °C
+/// @param[in] temperature specified in °C
+/// @param[in] humidity specified in % RH
+/// @returns Dew point in °C
+double calculateDewPoint(double temperature, double humditiy);
+
 #endif // ENVIRONMENT_CALCULATIONS_HPP_

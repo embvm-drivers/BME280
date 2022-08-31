@@ -287,11 +287,6 @@ class BME280
 	float readTemp(void);
 	void readTempFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
 
-	// Dewpoint related methods
-	// From Pavel-Sayekat: https://github.com/sparkfun/SparkFun_BME280_Breakout_Board/pull/6/files
-	double dewPointC(void);
-	double dewPointF(void);
-
 	// The following utilities read and write
 
 	// ReadRegisterRegion takes a uint8 array address as input and reads
