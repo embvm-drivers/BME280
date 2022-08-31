@@ -429,8 +429,8 @@ float BME280::convertTemperature(int32_t raw_input)
 			((int32_t)calibration.dig_T3)) >>
 		   14;
 	t_fine = var1 + var2;
-	float output = (t_fine * 5 + 128) >> 8;
 
+	float output = (t_fine * 5 + 128) >> 8;
 	output = output / 100 + settings.tempCorrection;
 
 	return output;
@@ -438,10 +438,6 @@ float BME280::convertTemperature(int32_t raw_input)
 
 float BME280::readTemp(void)
 {
-	// Returns temperature in DegC, resolution is 0.01 DegC. Output value of “5123” equals 51.23
-	// DegC. t_fine carries fine temperature as global value
-
-	// get the reading (adc_T);
 	uint8_t buffer[3];
 	readRegisterRegion(buffer, BME280_TEMPERATURE_MSB_REG, 3);
 	int32_t adc_T =
