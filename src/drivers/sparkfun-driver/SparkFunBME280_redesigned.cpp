@@ -67,13 +67,8 @@ BME280::BME280(BME280::write_func write_implementation, BME280::read_func read_i
 //  configure before calling .begin();
 //
 //****************************************************************************//
-bool BME280::begin()
+void BME280::readCompensationData()
 {
-	// Check communication with IC before anything else
-	uint8_t chipID = readRegister(BME280_CHIP_ID_REG); // Should return 0x60 or 0x58
-	if(chipID != 0x58 && chipID != 0x60) // Is this BMP or BME?
-		return (chipID); // This is not BMP nor BME!
-
 	// Reading all compensation data, range 0x88:A1, 0xE1:E7
 	calibration.dig_T1 = ((uint16_t)((readRegister(BME280_DIG_T1_MSB_REG) << 8) +
 									 readRegister(BME280_DIG_T1_LSB_REG)));
@@ -110,20 +105,41 @@ bool BME280::begin()
 	calibration.dig_H5 = ((int16_t)((readRegister(BME280_DIG_H5_MSB_REG) << 4) +
 									((readRegister(BME280_DIG_H4_LSB_REG) >> 4) & 0x0F)));
 	calibration.dig_H6 = ((int8_t)readRegister(BME280_DIG_H6_REG));
+}
 
-	// Most of the time the sensor will be init with default values
-	// But in case user has old/deprecated code, use the settings.x values
-	setStandbyTime(settings.tStandby);
-	setFilter(settings.filter);
-	setPressureOverSample(settings.pressOverSample); // Default of 1x oversample
-	setHumidityOverSample(settings.humidOverSample); // Default of 1x oversample
-	setTempOverSample(settings.tempOverSample); // Default of 1x oversample
+bool BME280::checkChipID()
+{
+	bool valid = false;
 
-	setMode(MODE_NORMAL); // Go!
+	uint8_t chipID = readRegister(BME280_CHIP_ID_REG);
+	if(chipID == 0x58 || chipID == 0x60) // Is this BMP or BME?
+	{
+		valid = true;
+	}
 
-	uint8_t chip_id = readRegister(BME280_CHIP_ID_REG); // Should return 0x60
+	return valid;
+}
 
-	return (chip_id == 0x58) || (chip_id == 0x60); // BMP = 0x58, BME = 0x60
+bool BME280::begin()
+{
+	bool chip_valid = checkChipID();
+
+	if(chip_valid)
+	{
+		readCompensationData();
+
+		// Most of the time the sensor will be init with default values
+		// But in case user has old/deprecated code, use the settings.x values
+		setStandbyTime(settings.tStandby);
+		setFilter(settings.filter);
+		setPressureOverSample(settings.pressOverSample); // Default of 1x oversample
+		setHumidityOverSample(settings.humidOverSample); // Default of 1x oversample
+		setTempOverSample(settings.tempOverSample); // Default of 1x oversample
+
+		setMode(MODE_NORMAL); // Go!
+	}
+
+	return chip_valid;
 }
 
 // Set the mode bits in the ctrl_meas register

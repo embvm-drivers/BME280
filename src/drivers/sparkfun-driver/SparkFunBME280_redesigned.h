@@ -301,6 +301,13 @@ class BME280
 	void writeRegister(uint8_t, uint8_t);
 
   private:
+	/// Read calibration/compensation info from the device.
+	/// This function only needs to be called once (part of begin())
+	void readCompensationData();
+
+	/// @returns true if the chip is valid (BME or BMA), false otherwise
+	bool checkChipID();
+
 	uint8_t checkSampleValue(uint8_t userValue); // Checks for valid over sample values
 
 	/// Converts from the raw sensor output to target representation
