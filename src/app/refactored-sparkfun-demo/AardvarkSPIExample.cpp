@@ -13,10 +13,12 @@ static AardvarkConfig mode_ = AA_CONFIG_SPI_I2C; // SPI + I2C
 void aardvark_initialize()
 {
 	int bitrate = 100;
-	uint16_t devices, devices_found;
+	uint16_t devices;
+	int devices_found;
 
 	// Find the port instead of using the hard-wired one
 	devices_found = aa_find_devices(1, &devices);
+	assert(devices_found);
 	assert(false == (AA_PORT_NOT_FREE & devices)); // Otherwise port is in uses
 	handle_ = aa_open(devices);
 	assert(handle_ > 0); // could not find aardvark device
@@ -66,7 +68,9 @@ void aardvark_spi_read(uint8_t reg_addr, uint8_t* data, size_t length, void* pri
 	memset(internal_buffer, 0, INTERNAL_SPI_BUFFER_SIZE);
 	internal_buffer[0] = reg_addr;
 
-	int r = aa_spi_write(handle_, length + 1, internal_buffer, length + 1, internal_buffer);
+	uint16_t target_length = static_cast<uint16_t>(length + 1);
+
+	int r = aa_spi_write(handle_, target_length, internal_buffer, target_length, internal_buffer);
 	assert(r >= AA_OK);
 
 	memcpy(data, &internal_buffer[1], length);
@@ -85,9 +89,11 @@ int main(void)
 	int sample_count = 0;
 	while(sample_count++ < 20)
 	{
-		printf("Humdity: %f, Pressure: %f, Alt: %f, Temp: %f\n", mySensor.readFloatHumidity(),
-			   mySensor.readFloatPressure(), mySensor.readFloatAltitudeFeet(),
-			   mySensor.readTempF());
+		printf("Humdity: %f, Pressure: %f, Alt: %f, Temp: %f\n",
+			   static_cast<double>(mySensor.readFloatHumidity()),
+			   static_cast<double>(mySensor.readFloatPressure()),
+			   static_cast<double>(mySensor.readFloatAltitudeFeet()),
+			   static_cast<double>(mySensor.readTempF()));
 	}
 
 	printf("Shutting down aardvark\n");
