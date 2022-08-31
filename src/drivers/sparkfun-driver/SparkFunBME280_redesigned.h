@@ -269,10 +269,6 @@ class BME280
 	void setStandbyTime(uint8_t timeSetting); // Set the standby time between measurements
 	void setFilter(uint8_t filterSetting); // Set the filter
 
-	void setReferencePressure(
-		float refPressure); // Allows user to set local sea level reference pressure
-	float getReferencePressure();
-
 	bool isMeasuring(void); // Returns true while the device is taking measurement
 
 	// Software reset routine
@@ -281,8 +277,6 @@ class BME280
 
 	// Returns the values as floats.
 	float readFloatPressure(void);
-	float readFloatAltitudeMeters(void);
-	float readFloatAltitudeFeet(void);
 	void readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
 
 	float readFloatHumidity(void);
@@ -324,7 +318,6 @@ class BME280
 	/// @returns temperature in °C
 	float convertTemperature(int32_t raw_input);
 
-	float _referencePressure = 101325.0; // Default but is changeable
 	write_func write_ = nullptr;
 	read_func read_ = nullptr;
 	void* private_data_ = nullptr;

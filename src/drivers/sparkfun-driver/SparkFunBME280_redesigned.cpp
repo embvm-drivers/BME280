@@ -379,48 +379,6 @@ void BME280::readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasureme
 	}
 }
 
-// Sets the internal variable _referencePressure so the altitude is calculated properly.
-// This is also known as "sea level pressure" and is in Pascals. The value is probably
-// within 10% of 101325. This varies based on the weather:
-// https://en.wikipedia.org/wiki/Atmospheric_pressure#Mean_sea-level_pressure
-//
-// if you are concerned about accuracy or precision, make sure to pull the
-// "sea level pressure"value from a trusted source like NOAA.
-void BME280::setReferencePressure(float refPressure)
-{
-	_referencePressure = refPressure;
-}
-
-// Return the local reference pressure
-float BME280::getReferencePressure()
-{
-	return (_referencePressure);
-}
-
-float BME280::readFloatAltitudeMeters(void)
-{
-	float heightOutput = 0;
-
-	// Getting height from a pressure reading is called the "international barometric height
-	// formula". The magic value of 44330.77 was adjusted in issue #30. There's also some discussion
-	// of it here: https://www.sparkfun.com/tutorials/253 This calculation is NOT designed to work
-	// on non-Earthlike planets such as Mars or Venus; see NRLMSISE-00. That's why it is the
-	// "international" formula, not "interplanetary". Sparkfun is not liable for incorrect altitude
-	// calculations from this code on those planets. Interplanetary selfies are welcome, however.
-	heightOutput = ((float)-44330.77) *
-				   (pow(((float)readFloatPressure() / (float)_referencePressure), 0.190263) -
-					(float)1); // Corrected, see issue 30
-	return heightOutput;
-}
-
-float BME280::readFloatAltitudeFeet(void)
-{
-	float heightOutput = 0;
-
-	heightOutput = readFloatAltitudeMeters() * 3.28084;
-	return heightOutput;
-}
-
 //****************************************************************************//
 //
 //  Humidity Section
