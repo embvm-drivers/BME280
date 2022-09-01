@@ -35,29 +35,11 @@ enum bme280_comm_mode
 	SPI_MODE
 };
 
-// Class BME280_SensorSettings.  This object is used to hold settings data.  The application
-// uses this classes' data directly.  The settings are adopted and sent to the sensor
-// at special times, such as .begin.  Some are used for doing math.
-//
-// This is a kind of bloated way to do this.  The trade-off is that the user doesn't
-// need to deal with #defines or enums with bizarre names.
-//
-// A power user would strip out BME280_SensorSettings entirely, and send specific read and
-// write command directly to the IC. (ST #defines below)
-//
-struct BME280_SensorSettings
+struct BME280_SensorMeasurements
 {
-	// Main Interface selection
-	bme280_comm_mode commInterface;
-
-	// Deprecated settings
-	uint8_t runMode;
-	uint8_t tStandby;
-	uint8_t filter;
-	uint8_t tempOverSample;
-	uint8_t pressOverSample;
-	uint8_t humidOverSample;
-	float tempCorrection; // correction of temperature - added to the result
+	float temperature;
+	float pressure;
+	float humidity;
 };
 
 // Used to hold the calibration constants.  These are used
@@ -84,13 +66,6 @@ struct SensorCalibration
 	int16_t dig_H4;
 	int16_t dig_H5;
 	int8_t dig_H6;
-};
-
-struct BME280_SensorMeasurements
-{
-	float temperature;
-	float pressure;
-	float humidity;
 };
 
 /** BME280 Driver Interface
@@ -185,16 +160,25 @@ class BME280
 							   void* /*private data*/);
 
   public:
-	// settings
-	BME280_SensorSettings settings;
 	SensorCalibration calibration;
 	int32_t t_fine;
 
-	// Constructor generates default BME280_SensorSettings.
-	//(over-ride after construction if desired)
+	/// BME280 Constructor
+	/// @param[in] write_implementation The implementation of the write_func that will be used by
+	/// 	the driver.
+	/// @param[in] read_implementation The implementation of the read_func that will be used by
+	/// 	the driver.
+	/// @param[in] comm_mode The communciation method that corresponds with the chosen read/write
+	/// 	implementation. If not specified, defaults to I2C communications.
+	/// @param[in] private_data Optional pointer to user-specified private data. This value will
+	///		be supplied to both the read_func and write_func implementations.
 	BME280(write_func write_implementation, read_func read_implementation,
-		   bme280_comm_mode comm_mode = I2C_MODE, void* private_data = nullptr);
-	//~BME280() = default;
+		   bme280_comm_mode comm_mode = I2C_MODE, void* private_data = nullptr)
+		: commInterface_(comm_mode), write_(write_implementation), read_(read_implementation),
+		  private_data_(private_data)
+	{
+	}
+	~BME280() = default;
 
 	/** Initialize the Device
 	 *
@@ -281,8 +265,17 @@ class BME280
 	int32_t assembleRawTempPressure(uint8_t* bytes);
 	int32_t assembleRawHumidity(uint8_t* bytes);
 
+  private: // Private member variabels
+	/// Selection of I2C/SPI communication interface
+	bme280_comm_mode commInterface_;
+	/// correction of temperature - added to the result of the compensation calculation
+	float tempCorrection_ = 0.0f;
+	/// Implementation of the write_ abstraction
 	write_func write_ = nullptr;
+	/// Implementation of the read_ abstraction
 	read_func read_ = nullptr;
+	/// Optional user-specified private data pointer that will be supplied to the
+	/// read_ and write_ abstractions
 	void* private_data_ = nullptr;
 };
 

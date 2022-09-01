@@ -39,35 +39,6 @@ Distributed as-is; no warranty is given.
 //
 //****************************************************************************//
 
-// Constructor -- Specifies default configuration
-BME280::BME280(BME280::write_func write_implementation, BME280::read_func read_implementation,
-			   bme280_comm_mode comm_mode, void* private_data)
-{
-	// Construct with these default settings
-	settings.commInterface = comm_mode;
-	write_ = write_implementation;
-	read_ = read_implementation;
-	private_data_ = private_data;
-
-	// These are deprecated settings
-	settings.runMode = 3; // Normal/Run
-	settings.tStandby = 0; // 0.5ms
-	settings.filter = 0; // Filter off
-	settings.tempOverSample = 1;
-	settings.pressOverSample = 1;
-	settings.humidOverSample = 1;
-	settings.tempCorrection = 0.f; // correction of temperature - added to the result
-}
-
-//****************************************************************************//
-//
-//  Configuration section
-//
-//  This uses the stored BME280_SensorSettings to start the IMU
-//  Use statements such as "mySensor.settings.commInterface = SPI_MODE;" to
-//  configure before calling .begin();
-//
-//****************************************************************************//
 void BME280::readCompensationData()
 {
 	// Reading all compensation data, range 0x88:A1, 0xE1:E7
@@ -129,13 +100,11 @@ bool BME280::begin()
 	{
 		readCompensationData();
 
-		// Most of the time the sensor will be init with default values
-		// But in case user has old/deprecated code, use the settings.x values
-		setStandbyTime(settings.tStandby);
-		setFilter(settings.filter);
-		setPressureOverSample(settings.pressOverSample); // Default of 1x oversample
-		setHumidityOverSample(settings.humidOverSample); // Default of 1x oversample
-		setTempOverSample(settings.tempOverSample); // Default of 1x oversample
+		setStandbyTime(0); // 0.5ms
+		setFilter(0); // filter off
+		setPressureOverSample(1); // Default of 1x oversample
+		setHumidityOverSample(1); // Default of 1x oversample
+		setTempOverSample(1); // Default of 1x oversample
 
 		setMode(op_mode::normal); // Go!
 	}
@@ -433,7 +402,7 @@ void BME280::readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasureme
 
 void BME280::setTemperatureCorrection(float corr)
 {
-	settings.tempCorrection = corr;
+	tempCorrection_ = corr;
 }
 
 float BME280::convertTemperature(int32_t raw_input)
@@ -452,7 +421,7 @@ float BME280::convertTemperature(int32_t raw_input)
 	t_fine = var1 + var2;
 
 	float output = (t_fine * 5 + 128) >> 8;
-	output = output / 100 + settings.tempCorrection;
+	output = output / 100 + tempCorrection_;
 
 	return output;
 }
@@ -490,7 +459,7 @@ void BME280::readRegisterRegion(uint8_t* outputPointer, uint8_t offset, uint8_t 
 {
 	assert(read_);
 
-	if(settings.commInterface == SPI_MODE)
+	if(commInterface_ == SPI_MODE)
 	{
 		offset |= 0x80; // set the read bit
 	}
@@ -522,7 +491,7 @@ void BME280::writeRegister(uint8_t offset, uint8_t dataToWrite)
 {
 	assert(write_);
 
-	if(settings.commInterface == SPI_MODE)
+	if(commInterface_ == SPI_MODE)
 	{
 		offset &= 0x7F; // ensure offset does not include a read bit in position 0x80
 	}
