@@ -178,12 +178,11 @@ class BME280
 {
   public:
 	/// Operational modes supported by the BME280 part
-	enum class op_mode
+	enum class op_mode : uint8_t
 	{
-		sleep,
-		forced,
-		normal,
-		MAX
+		sleep = 0b00,
+		forced = 0b01,
+		normal = 0b11,
 	};
 
 	/** Prototype for the driver's write function abstraction

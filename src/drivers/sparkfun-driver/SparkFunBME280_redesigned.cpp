@@ -146,25 +146,9 @@ bool BME280::begin()
 // Set the mode bits in the ctrl_meas register
 void BME280::setMode(BME280::op_mode mode)
 {
-	uint8_t mode_bits;
-	switch(mode)
-	{
-		case BME280::op_mode::normal:
-			mode_bits = BME280_MODE_NORMAL;
-			break;
-		case BME280::op_mode::forced:
-			mode_bits = BME280_MODE_FORCED;
-			break;
-		case BME280::op_mode::sleep:
-			mode_bits = BME280_MODE_SLEEP;
-			break;
-		case BME280::op_mode::MAX:
-			assert(0); // invalid input
-	}
-
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
 	controlData &= ~((1 << 1) | (1 << 0)); // Clear the mode[1:0] bits
-	controlData |= mode_bits; // Set
+	controlData |= static_cast<uint8_t>(mode); // Set
 	writeRegister(BME280_CTRL_MEAS_REG, controlData);
 }
 
@@ -177,14 +161,10 @@ BME280::op_mode BME280::getMode()
 	BME280::op_mode mode;
 	switch(mode_bits)
 	{
-		case BME280_MODE_NORMAL:
-			mode = BME280::op_mode::normal;
-			break;
-		case BME280_MODE_FORCED:
-			mode = BME280::op_mode::forced;
-			break;
-		case BME280_MODE_SLEEP:
-			mode = BME280::op_mode::sleep;
+		case static_cast<uint8_t>(BME280::op_mode::normal):
+		case static_cast<uint8_t>(BME280::op_mode::forced):
+		case static_cast<uint8_t>(BME280::op_mode::sleep):
+			mode = static_cast<BME280::op_mode>(mode_bits);
 			break;
 		default:
 			assert(0); // Unexpected value!
