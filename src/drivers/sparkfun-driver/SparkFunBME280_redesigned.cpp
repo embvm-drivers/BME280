@@ -33,6 +33,29 @@ Distributed as-is; no warranty is given.
 #include <cstring>
 #endif
 
+class BME280SettingChangeProtector
+{
+  public:
+	BME280SettingChangeProtector(BME280& inst) : inst_(inst)
+	{
+		// Get the current mode so we can go back to it at the end
+		originalMode = inst_.getMode();
+
+		// Config will only be writeable in sleep mode, so first go to sleep mode
+		inst_.setMode(BME280::op_mode::sleep);
+	}
+
+	~BME280SettingChangeProtector()
+	{
+		// Return to the original user's choice
+		inst_.setMode(originalMode);
+	}
+
+  private:
+	BME280& inst_;
+	BME280::op_mode originalMode;
+};
+
 //****************************************************************************//
 //
 //  Settings and configuration
@@ -186,20 +209,14 @@ void BME280::setFilter(uint8_t filterSetting)
 // 1 to 16 are valid over sampling values
 void BME280::setTempOverSample(uint8_t overSampleAmount)
 {
+	BME280SettingChangeProtector{*this};
+
 	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
-
-	auto originalMode = getMode(); // Get the current mode so we can go back to it at the end
-
-	setMode(
-		op_mode::sleep); // Config will only be writeable in sleep mode, so first go to sleep mode
-
 	// Set the osrs_t bits (7, 6, 5) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
 	controlData &= ~((1 << 7) | (1 << 6) | (1 << 5)); // Clear bits 765
 	controlData |= overSampleAmount << 5; // Align overSampleAmount to bits 7/6/5
 	writeRegister(BME280_CTRL_MEAS_REG, controlData);
-
-	setMode(originalMode); // Return to the original user's choice
 }
 
 // Set the pressure oversample value
@@ -207,20 +224,14 @@ void BME280::setTempOverSample(uint8_t overSampleAmount)
 // 1 to 16 are valid over sampling values
 void BME280::setPressureOverSample(uint8_t overSampleAmount)
 {
+	BME280SettingChangeProtector{*this};
+
 	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
-
-	auto originalMode = getMode(); // Get the current mode so we can go back to it at the end
-
-	setMode(
-		op_mode::normal); // Config will only be writeable in sleep mode, so first go to sleep mode
-
 	// Set the osrs_p bits (4, 3, 2) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
 	controlData &= ~((1 << 4) | (1 << 3) | (1 << 2)); // Clear bits 432
 	controlData |= overSampleAmount << 2; // Align overSampleAmount to bits 4/3/2
 	writeRegister(BME280_CTRL_MEAS_REG, controlData);
-
-	setMode(originalMode); // Return to the original user's choice
 }
 
 // Set the humidity oversample value
@@ -228,20 +239,14 @@ void BME280::setPressureOverSample(uint8_t overSampleAmount)
 // 1 to 16 are valid over sampling values
 void BME280::setHumidityOverSample(uint8_t overSampleAmount)
 {
+	BME280SettingChangeProtector{*this};
+
 	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
-
-	auto originalMode = getMode(); // Get the current mode so we can go back to it at the end
-
-	setMode(
-		op_mode::sleep); // Config will only be writeable in sleep mode, so first go to sleep mode
-
 	// Set the osrs_h bits (2, 1, 0) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_HUMIDITY_REG);
 	controlData &= ~((1 << 2) | (1 << 1) | (1 << 0)); // Clear bits 2/1/0
 	controlData |= overSampleAmount << 0; // Align overSampleAmount to bits 2/1/0
 	writeRegister(BME280_CTRL_HUMIDITY_REG, controlData);
-
-	setMode(originalMode); // Return to the original user's choice
 }
 
 // Validates an over sample value
