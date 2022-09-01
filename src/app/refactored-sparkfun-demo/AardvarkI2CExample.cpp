@@ -81,10 +81,10 @@ int main(void)
 		auto dew_point = static_cast<double>(
 			celsiusToFahrenheit(static_cast<float>(calculateDewPoint(temperature, humidity))));
 
-		printf("Humdity: %f %%Rh, Pressure: %f Pa, Altitude: %f ft, Temp: %f °F, Dew Point: %f °F\n",
-			   humidity, static_cast<double>(pressure), altitude,
-			   static_cast<double>(celsiusToFahrenheit(static_cast<float>(temperature))),
-			   dew_point);
+		printf(
+			"Humdity: %f %%Rh, Pressure: %f Pa, Altitude: %f ft, Temp: %f °F, Dew Point: %f °F\n",
+			humidity, static_cast<double>(pressure), altitude,
+			static_cast<double>(celsiusToFahrenheit(static_cast<float>(temperature))), dew_point);
 	}
 
 	printf("Shutting down aardvark\n");

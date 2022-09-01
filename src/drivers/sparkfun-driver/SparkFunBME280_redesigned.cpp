@@ -21,6 +21,7 @@ Distributed as-is; no warranty is given.
 // See SparkFunBME280.h for additional topology notes.
 
 #include "SparkFunBME280_redesigned.h"
+#include "_private/bme280_defs.hpp"
 #ifdef __AVR
 // avr-gcc does not seem to supply the C++ versions of these headers
 #include <assert.h>
@@ -136,35 +137,60 @@ bool BME280::begin()
 		setHumidityOverSample(settings.humidOverSample); // Default of 1x oversample
 		setTempOverSample(settings.tempOverSample); // Default of 1x oversample
 
-		setMode(MODE_NORMAL); // Go!
+		setMode(op_mode::normal); // Go!
 	}
 
 	return chip_valid;
 }
 
 // Set the mode bits in the ctrl_meas register
-//  Mode 00 = Sleep
-//  01 and 10 = Forced
-//  11 = Normal mode
-void BME280::setMode(uint8_t mode)
+void BME280::setMode(BME280::op_mode mode)
 {
-	if(mode > 0b11)
-		mode = 0; // Error check. Default to sleep mode
+	uint8_t mode_bits;
+	switch(mode)
+	{
+		case BME280::op_mode::normal:
+			mode_bits = BME280_MODE_NORMAL;
+			break;
+		case BME280::op_mode::forced:
+			mode_bits = BME280_MODE_FORCED;
+			break;
+		case BME280::op_mode::sleep:
+			mode_bits = BME280_MODE_SLEEP;
+			break;
+		case BME280::op_mode::MAX:
+			assert(0); // invalid input
+	}
 
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
 	controlData &= ~((1 << 1) | (1 << 0)); // Clear the mode[1:0] bits
-	controlData |= mode; // Set
+	controlData |= mode_bits; // Set
 	writeRegister(BME280_CTRL_MEAS_REG, controlData);
 }
 
 // Gets the current mode bits in the ctrl_meas register
-// Mode 00 = Sleep
-//  01 and 10 = Forced
-//  11 = Normal mode
-uint8_t BME280::getMode()
+BME280::op_mode BME280::getMode()
 {
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
-	return (controlData & 0b00000011); // Clear bits 7 through 2
+	uint8_t mode_bits = (controlData & 0b00000011); // Clear bits 7 through 2
+
+	BME280::op_mode mode;
+	switch(mode_bits)
+	{
+		case BME280_MODE_NORMAL:
+			mode = BME280::op_mode::normal;
+			break;
+		case BME280_MODE_FORCED:
+			mode = BME280::op_mode::forced;
+			break;
+		case BME280_MODE_SLEEP:
+			mode = BME280::op_mode::sleep;
+			break;
+		default:
+			assert(0); // Unexpected value!
+	}
+
+	return mode;
 }
 
 // Set the standby bits in the config register
@@ -213,9 +239,10 @@ void BME280::setTempOverSample(uint8_t overSampleAmount)
 {
 	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
 
-	uint8_t originalMode = getMode(); // Get the current mode so we can go back to it at the end
+	auto originalMode = getMode(); // Get the current mode so we can go back to it at the end
 
-	setMode(MODE_SLEEP); // Config will only be writeable in sleep mode, so first go to sleep mode
+	setMode(
+		op_mode::sleep); // Config will only be writeable in sleep mode, so first go to sleep mode
 
 	// Set the osrs_t bits (7, 6, 5) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
@@ -233,9 +260,10 @@ void BME280::setPressureOverSample(uint8_t overSampleAmount)
 {
 	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
 
-	uint8_t originalMode = getMode(); // Get the current mode so we can go back to it at the end
+	auto originalMode = getMode(); // Get the current mode so we can go back to it at the end
 
-	setMode(MODE_SLEEP); // Config will only be writeable in sleep mode, so first go to sleep mode
+	setMode(
+		op_mode::normal); // Config will only be writeable in sleep mode, so first go to sleep mode
 
 	// Set the osrs_p bits (4, 3, 2) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
@@ -253,9 +281,10 @@ void BME280::setHumidityOverSample(uint8_t overSampleAmount)
 {
 	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
 
-	uint8_t originalMode = getMode(); // Get the current mode so we can go back to it at the end
+	auto originalMode = getMode(); // Get the current mode so we can go back to it at the end
 
-	setMode(MODE_SLEEP); // Config will only be writeable in sleep mode, so first go to sleep mode
+	setMode(
+		op_mode::sleep); // Config will only be writeable in sleep mode, so first go to sleep mode
 
 	// Set the osrs_h bits (2, 1, 0) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_HUMIDITY_REG);

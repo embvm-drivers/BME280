@@ -35,11 +35,6 @@ enum bme280_comm_mode
 	SPI_MODE
 };
 
-// TODO: make an enumeration
-#define MODE_SLEEP 0b00
-#define MODE_FORCED 0b01
-#define MODE_NORMAL 0b11
-
 // TODO: move to a separate header, only available for implementation
 // Register names:
 #define BME280_DIG_T1_LSB_REG 0x88
@@ -182,6 +177,15 @@ struct BME280_SensorMeasurements
 class BME280
 {
   public:
+	/// Operational modes supported by the BME280 part
+	enum class op_mode
+	{
+		sleep,
+		forced,
+		normal,
+		MAX
+	};
+
 	/** Prototype for the driver's write function abstraction
 	 *
 	 * Users of this driver must supply an implementation for the write function, which is what
@@ -260,8 +264,8 @@ class BME280
 	 */
 	bool begin();
 
-	uint8_t getMode(void); // Get the current mode: sleep, forced, or normal
-	void setMode(uint8_t mode); // Set the current mode
+	op_mode getMode(void); // Get the current mode: sleep, forced, or normal
+	void setMode(op_mode mode); // Set the current mode
 
 	void setTempOverSample(uint8_t overSampleAmount); // Set the temperature sample mode
 	void setPressureOverSample(uint8_t overSampleAmount); // Set the pressure sample mode
