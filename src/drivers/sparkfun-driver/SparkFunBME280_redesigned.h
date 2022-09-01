@@ -29,13 +29,6 @@ Distributed as-is; no warranty is given.
 #include <cstdint>
 #endif
 
-struct BME280_SensorMeasurements
-{
-	float temperature;
-	float pressure;
-	float humidity;
-};
-
 /** BME280 Driver Interface
  *
  * This driver supports both I2C and SPI communications. By default, the driver
@@ -76,6 +69,13 @@ class BME280
 	{
 		I2C,
 		SPI
+	};
+
+	struct Measurements
+	{
+		float temperature;
+		float pressure;
+		float humidity;
 	};
 
 	/// Operational modes supported by the BME280 part
@@ -237,7 +237,7 @@ class BME280
 	/// @returns true if the device is currently making a measurement
 	bool isMeasuring(void);
 	/// Read all values at once
-	void readAllMeasurements(BME280_SensorMeasurements* measurements);
+	void readAllMeasurements(Measurements& measurements);
 	float readFloatPressure(void);
 	float readFloatHumidity(void);
 	float readTemp(void);
@@ -268,9 +268,9 @@ class BME280
 	int32_t assembleRawTempPressure(uint8_t* bytes);
 	int32_t assembleRawHumidity(uint8_t* bytes);
 
-	void readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
-	void readTempFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
-	void readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
+	void readFloatPressureFromBurst(uint8_t buffer[], Measurements& measurements);
+	void readTempFromBurst(uint8_t buffer[], Measurements& measurements);
+	void readFloatHumidityFromBurst(uint8_t buffer[], Measurements& measurements);
 
 	// ReadRegisterRegion takes a uint8 array address as input and reads
 	// a chunk of memory into that array.

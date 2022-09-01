@@ -260,7 +260,7 @@ void BME280::reset(void)
 //****************************************************************************//
 
 // Read all sensor registers as a burst. See BME280 Datasheet section 4. Data readout
-void BME280::readAllMeasurements(BME280_SensorMeasurements* measurements)
+void BME280::readAllMeasurements(BME280::Measurements& measurements)
 {
 	uint8_t dataBurst[8];
 	readRegisterRegion(dataBurst, BME280_MEASUREMENTS_REG, 8);
@@ -309,10 +309,10 @@ float BME280::readFloatPressure(void)
 	return convertPressure(adc_P);
 }
 
-void BME280::readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
+void BME280::readFloatPressureFromBurst(uint8_t buffer[], BME280::Measurements& measurements)
 {
 	int32_t adc_P = assembleRawTempPressure(buffer);
-	measurements->pressure = convertPressure(adc_P);
+	measurements.pressure = convertPressure(adc_P);
 }
 
 //****************************************************************************//
@@ -353,10 +353,10 @@ float BME280::readFloatHumidity(void)
 	return convertHumidity(adc_H);
 }
 
-void BME280::readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
+void BME280::readFloatHumidityFromBurst(uint8_t buffer[], BME280::Measurements& measurements)
 {
 	int32_t adc_H = assembleRawHumidity(&buffer[6]);
-	measurements->humidity = convertHumidity(adc_H);
+	measurements.humidity = convertHumidity(adc_H);
 }
 
 //****************************************************************************//
@@ -399,10 +399,10 @@ float BME280::readTemp(void)
 	return convertTemperature(adc_T);
 }
 
-void BME280::readTempFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements)
+void BME280::readTempFromBurst(uint8_t buffer[], BME280::Measurements& measurements)
 {
 	int32_t adc_T = assembleRawTempPressure(&buffer[3]);
-	measurements->temperature = convertTemperature(adc_T);
+	measurements.temperature = convertTemperature(adc_T);
 }
 
 //****************************************************************************//
