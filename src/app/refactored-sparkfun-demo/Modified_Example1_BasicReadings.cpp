@@ -24,7 +24,8 @@
   SCL -> A5
 */
 
-#include "SparkFunBME280.h"
+#include "SparkFunBME280_redesigned.h"
+#include "environment_calculations.hpp"
 #include <Arduino.h>
 #include <Wire.h>
 #include <assert.h>
@@ -85,19 +86,20 @@ void setup()
 
 void loop()
 {
+	auto pressure = mySensor.readFloatPressure();
+
 	Serial.print("Humidity: ");
 	Serial.print(mySensor.readFloatHumidity(), 0);
 
 	Serial.print(" Pressure: ");
-	Serial.print(mySensor.readFloatPressure(), 0);
+	Serial.print(pressure, 0);
 
 	Serial.print(" Alt: ");
-	// Serial.print(mySensor.readFloatAltitudeMeters(), 1);
-	Serial.print(mySensor.readFloatAltitudeFeet(), 1);
+	Serial.print(metersToFeet(calculateAltitude(pressure)), 1);
 
 	Serial.print(" Temp: ");
 	// Serial.print(mySensor.readTempC(), 2);
-	Serial.print(mySensor.readTempF(), 2);
+	Serial.print(celsiusToFahrenheit(mySensor.readTemp()), 2);
 
 	Serial.println();
 

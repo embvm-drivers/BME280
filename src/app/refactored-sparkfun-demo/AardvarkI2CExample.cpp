@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: © 2022 Embedded Artistry LLC <contact@embeddedartistry.com>
 // SPDX-License-Identifier: MIT
 
-#include "SparkFunBME280.h"
 #include "aardvark.h"
+#include <SparkFunBME280_redesigned.h>
 #include <cassert>
 #include <cstdio>
+#include <environment_calculations.hpp>
 
 static Aardvark handle_ = 0;
 static AardvarkConfig mode_ = AA_CONFIG_SPI_I2C; // SPI + I2C
@@ -72,11 +73,18 @@ int main(void)
 	int sample_count = 0;
 	while(sample_count++ < 20)
 	{
-		printf("Humdity: %f, Pressure: %f, Alt: %f, Temp: %f\n",
-			   static_cast<double>(mySensor.readFloatHumidity()),
-			   static_cast<double>(mySensor.readFloatPressure()),
-			   static_cast<double>(mySensor.readFloatAltitudeFeet()),
-			   static_cast<double>(mySensor.readTempF()));
+		auto pressure = mySensor.readFloatPressure();
+		auto humidity = static_cast<double>(mySensor.readFloatHumidity());
+		auto temperature = static_cast<double>(mySensor.readTemp());
+		auto altitude =
+			static_cast<double>(metersToFeet(calculateAltitude(static_cast<float>(pressure))));
+		auto dew_point = static_cast<double>(
+			celsiusToFahrenheit(static_cast<float>(calculateDewPoint(temperature, humidity))));
+
+		printf("Humdity: %f %%Rh, Pressure: %f Pa, Altitude: %f ft, Temp: %f °F, Dew Point: %f °F\n",
+			   humidity, static_cast<double>(pressure), altitude,
+			   static_cast<double>(celsiusToFahrenheit(static_cast<float>(temperature))),
+			   dew_point);
 	}
 
 	printf("Shutting down aardvark\n");
