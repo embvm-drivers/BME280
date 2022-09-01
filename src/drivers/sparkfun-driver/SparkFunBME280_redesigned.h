@@ -201,9 +201,6 @@ class BME280
 							   void* /*private data*/);
 
   public:
-	SensorCalibration calibration;
-	int32_t t_fine;
-
 	/// BME280 Constructor
 	/// @param[in] write_implementation The implementation of the write_func that will be used by
 	/// 	the driver.
@@ -238,45 +235,36 @@ class BME280
 	 */
 	bool begin();
 
-	op_mode getMode(void); // Get the current mode: sleep, forced, or normal
-	void setMode(op_mode mode); // Set the current mode
-
-	void setTempOverSample(oversampling overSampleAmount); // Set the temperature sample mode
-	void setPressureOverSample(oversampling overSampleAmount); // Set the pressure sample mode
-	void setHumidityOverSample(oversampling overSampleAmount); // Set the humidity sample mode
-	void setStandbyTime(standby timeSetting); // Set the standby time between measurements
-	void setFilter(filtering filterSetting); // Set the filter
-
-	bool isMeasuring(void); // Returns true while the device is taking measurement
-
-	// Software reset routine
+	/// Perform a software reset
 	void reset(void);
-	void readAllMeasurements(BME280_SensorMeasurements* measurements);
 
-	// Returns the values as floats.
-	float readFloatPressure(void);
-	void readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
+	/// Read the current operating mode from the device.
+	op_mode getMode(void);
+	/// Set a new operating mode on the device
+	void setMode(op_mode mode);
 
-	float readFloatHumidity(void);
-	void readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
-
-	// Temperature related methods
+	/// Set the driver-side temperature offset value.
+	/// This value is applied AFTER compensation calculations.
+	/// @param[in] corr Offset to apply to temperature measurements.
 	void setTemperatureCorrection(float corr);
+	/// Set temperature sensor oversampling value (default: 1x)
+	void setTempOverSample(oversampling overSampleAmount);
+	/// Set pressure sensor oversampling value (default: 1x)
+	void setPressureOverSample(oversampling overSampleAmount);
+	/// Set humidity sensor oversampling value (default: 1x)
+	void setHumidityOverSample(oversampling overSampleAmount);
+	/// Set the time between measurements on the sensor side (default: 0.5ms)
+	void setStandbyTime(standby timeSetting);
+	/// Set the device-side filter coefficient (default: off)
+	void setFilter(filtering filterSetting);
+
+	/// @returns true if the device is currently making a measurement
+	bool isMeasuring(void);
+	/// Read all values at once
+	void readAllMeasurements(BME280_SensorMeasurements* measurements);
+	float readFloatPressure(void);
+	float readFloatHumidity(void);
 	float readTemp(void);
-	void readTempFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
-
-	// The following utilities read and write
-
-	// ReadRegisterRegion takes a uint8 array address as input and reads
-	// a chunk of memory into that array.
-	void readRegisterRegion(uint8_t*, uint8_t, uint8_t);
-	// readRegister reads one register
-	uint8_t readRegister(uint8_t);
-	// Reads two regs, LSByte then MSByte order, and concatenates them
-	// Used for two-byte reads
-	int16_t readRegisterInt16(uint8_t offset);
-	// Writes a byte;
-	void writeRegister(uint8_t, uint8_t);
 
   private:
 	/// Read calibration/compensation info from the device.
@@ -304,6 +292,21 @@ class BME280
 	int32_t assembleRawTempPressure(uint8_t* bytes);
 	int32_t assembleRawHumidity(uint8_t* bytes);
 
+	void readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
+	void readTempFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
+	void readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasurements* measurements);
+
+	// ReadRegisterRegion takes a uint8 array address as input and reads
+	// a chunk of memory into that array.
+	void readRegisterRegion(uint8_t*, uint8_t, uint8_t);
+	// readRegister reads one register
+	uint8_t readRegister(uint8_t);
+	// Reads two regs, LSByte then MSByte order, and concatenates them
+	// Used for two-byte reads
+	int16_t readRegisterInt16(uint8_t offset);
+	// Writes a byte;
+	void writeRegister(uint8_t, uint8_t);
+
   private: // Private member variabels
 	/// Selection of I2C/SPI communication interface
 	bme280_comm_mode commInterface_;
@@ -316,6 +319,8 @@ class BME280
 	/// Optional user-specified private data pointer that will be supplied to the
 	/// read_ and write_ abstractions
 	void* private_data_ = nullptr;
+	SensorCalibration calibration;
+	int32_t t_fine;
 };
 
 #endif // End of __BME280_H__ definition check
