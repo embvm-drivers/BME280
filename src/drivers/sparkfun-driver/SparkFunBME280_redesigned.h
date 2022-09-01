@@ -16,7 +16,6 @@ Distributed as-is; no warranty is given.
 
 ******************************************************************************/
 
-// Test derived class for base class SparkFunIMU
 #ifndef __BME280_H__
 #define __BME280_H__
 
@@ -282,6 +281,9 @@ class BME280
 	int16_t readRegisterInt16(uint8_t offset);
 	// Writes a byte;
 	void writeRegister(uint8_t, uint8_t);
+
+	void UpdateRegisterField(const uint8_t reg_addr, const uint8_t mask, const uint8_t shift,
+							 const uint8_t data);
 
   private:
 	// Used to hold the calibration constants.  These are used

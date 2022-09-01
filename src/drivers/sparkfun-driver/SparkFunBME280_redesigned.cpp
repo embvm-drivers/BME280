@@ -135,16 +135,6 @@ bool BME280::begin()
 	return chip_valid;
 }
 
-// Set the mode bits in the ctrl_meas register
-void BME280::setMode(BME280::op_mode mode)
-{
-	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
-	controlData &= ~((1 << 1) | (1 << 0)); // Clear the mode[1:0] bits
-	controlData |= static_cast<uint8_t>(mode); // Set
-	writeRegister(BME280_CTRL_MEAS_REG, controlData);
-}
-
-// Gets the current mode bits in the ctrl_meas register
 BME280::op_mode BME280::getMode()
 {
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
@@ -165,86 +155,53 @@ BME280::op_mode BME280::getMode()
 	return mode;
 }
 
-// Set the standby bits in the config register
-// tStandby can be:
-//   0, 0.5ms
-//   1, 62.5ms
-//   2, 125ms
-//   3, 250ms
-//   4, 500ms
-//   5, 1000ms
-//   6, 10ms
-//   7, 20ms
+void BME280::setMode(BME280::op_mode mode)
+{
+	UpdateRegisterField(BME280_CTRL_MEAS_REG, BME280_CONFIG_MODE_MASK, BME280_CONFIG_MODE_SHIFT,
+						static_cast<uint8_t>(mode));
+}
+
 void BME280::setStandbyTime(BME280::standby timeSetting)
 {
-	uint8_t controlData = readRegister(BME280_CONFIG_REG);
-	controlData &= ~((1 << 7) | (1 << 6) | (1 << 5)); // Clear the 7/6/5 bits
-	controlData |= (static_cast<uint8_t>(timeSetting) << 5); // Align with bits 7/6/5
-	writeRegister(BME280_CONFIG_REG, controlData);
+	UpdateRegisterField(BME280_CONFIG_REG, BME280_CONFIG_STANDBY_MASK, BME280_CONFIG_STANDBY_SHIFT,
+						static_cast<uint8_t>(timeSetting));
 }
 
-// Set the filter bits in the config register
-// filter can be off or number of FIR coefficients to use:
-//   0, filter off
-//   1, coefficients = 2
-//   2, coefficients = 4
-//   3, coefficients = 8
-//   4, coefficients = 16
 void BME280::setFilter(BME280::filtering filterSetting)
 {
-	uint8_t controlData = readRegister(BME280_CONFIG_REG);
-	controlData &= ~((1 << 4) | (1 << 3) | (1 << 2)); // Clear the 4/3/2 bits
-	controlData |= (static_cast<uint8_t>(filterSetting) << 2); // Align with bits 4/3/2
-	writeRegister(BME280_CONFIG_REG, controlData);
+	UpdateRegisterField(BME280_CONFIG_REG, BME280_CONFIG_FILTER_MASK, BME280_CONFIG_FILTER_SHIFT,
+						static_cast<uint8_t>(filterSetting));
 }
 
-// Set the temperature oversample value
-// 0 turns off temp sensing
-// 1 to 16 are valid over sampling values
 void BME280::setTempOverSample(BME280::oversampling overSampleAmount)
 {
 	BME280SettingChangeProtector{*this};
-	// Set the osrs_t bits (7, 6, 5) to overSampleAmount
-	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
-	controlData &= ~((1 << 7) | (1 << 6) | (1 << 5)); // Clear bits 765
-	controlData |= static_cast<uint8_t>(overSampleAmount)
-				   << 5; // Align overSampleAmount to bits 7/6/5
-	writeRegister(BME280_CTRL_MEAS_REG, controlData);
+	UpdateRegisterField(BME280_CTRL_MEAS_REG, BME280_CTRL_OVERSAMPLE_MASK,
+						BME280_CTRL_TEMPERATURE_OVERSAMPLE_SHIFT,
+						static_cast<uint8_t>(overSampleAmount));
 }
 
-// Set the pressure oversample value
-// 0 turns off pressure sensing
-// 1 to 16 are valid over sampling values
 void BME280::setPressureOverSample(BME280::oversampling overSampleAmount)
 {
 	BME280SettingChangeProtector{*this};
-	// Set the osrs_p bits (4, 3, 2) to overSampleAmount
-	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
-	controlData &= ~((1 << 4) | (1 << 3) | (1 << 2)); // Clear bits 432
-	controlData |= static_cast<uint8_t>(overSampleAmount)
-				   << 2; // Align overSampleAmount to bits 4/3/2
-	writeRegister(BME280_CTRL_MEAS_REG, controlData);
+	UpdateRegisterField(BME280_CTRL_MEAS_REG, BME280_CTRL_OVERSAMPLE_MASK,
+						BME280_CTRL_PRESSURE_OVERSAMPLE_SHIFT,
+						static_cast<uint8_t>(overSampleAmount));
 }
 
-// Set the humidity oversample value
-// 0 turns off humidity sensing
-// 1 to 16 are valid over sampling values
 void BME280::setHumidityOverSample(BME280::oversampling overSampleAmount)
 {
 	BME280SettingChangeProtector{*this};
-	// Set the osrs_h bits (2, 1, 0) to overSampleAmount
-	uint8_t controlData = readRegister(BME280_CTRL_HUMIDITY_REG);
-	controlData &= ~((1 << 2) | (1 << 1) | (1 << 0)); // Clear bits 2/1/0
-	controlData |= static_cast<uint8_t>(overSampleAmount)
-				   << 0; // Align overSampleAmount to bits 2/1/0
-	writeRegister(BME280_CTRL_HUMIDITY_REG, controlData);
+	UpdateRegisterField(BME280_CTRL_HUMIDITY_REG, BME280_CTRL_OVERSAMPLE_MASK,
+						BME280_CTRL_HUMIDITY_OVERSAMPLE_SHIFT,
+						static_cast<uint8_t>(overSampleAmount));
 }
 
 // Check the measuring bit and return true while device is taking measurement
 bool BME280::isMeasuring(void)
 {
 	uint8_t stat = readRegister(BME280_STAT_REG);
-	return (stat & (1 << 3)); // If the measuring bit (3) is set, return true
+	return (stat & BME280_STAT_STATUS_MASK);
 }
 
 // Strictly resets.  Run .begin() afterwards
@@ -410,6 +367,15 @@ void BME280::readTempFromBurst(uint8_t buffer[], BME280::Measurements& measureme
 //  Utility
 //
 //****************************************************************************//
+void BME280::UpdateRegisterField(const uint8_t reg_addr, const uint8_t mask, const uint8_t shift,
+								 const uint8_t data)
+{
+	uint8_t register_data = readRegister(reg_addr);
+	register_data &= ~(mask << shift);
+	register_data |= (data & mask) << shift;
+	writeRegister(reg_addr, register_data);
+}
+
 int32_t BME280::assembleRawTempPressure(uint8_t* bytes)
 {
 	return ((uint32_t)bytes[0] << 12) | ((uint32_t)bytes[1] << 4) | ((bytes[2] >> 4) & 0x0F);
