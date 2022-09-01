@@ -218,6 +218,17 @@ class BME280
 	/// Set a new operating mode on the device
 	void setMode(op_mode mode);
 
+	/// Read all values at once
+	void readAllMeasurements(BME280::Measurements& measurements);
+	/// Read the current pressure from the device
+	float readFloatPressure(void);
+	/// Read the current humidity from the device
+	float readFloatHumidity(void);
+	/// Read the current temperature from the device
+	float readTemp(void);
+	/// @returns true if the device is currently making a measurement
+	bool isMeasuring(void);
+
 	/// Set the driver-side temperature offset value.
 	/// This value is applied AFTER compensation calculations.
 	/// @param[in] corr Offset to apply to temperature measurements.
@@ -232,14 +243,6 @@ class BME280
 	void setStandbyTime(standby timeSetting);
 	/// Set the device-side filter coefficient (default: off)
 	void setFilter(filtering filterSetting);
-
-	/// @returns true if the device is currently making a measurement
-	bool isMeasuring(void);
-	/// Read all values at once
-	void readAllMeasurements(Measurements& measurements);
-	float readFloatPressure(void);
-	float readFloatHumidity(void);
-	float readTemp(void);
 
   private:
 	/// Read calibration/compensation info from the device.
