@@ -42,32 +42,6 @@ struct BME280_SensorMeasurements
 	float humidity;
 };
 
-// Used to hold the calibration constants.  These are used
-// by the driver as measurements are being taking
-struct SensorCalibration
-{
-	uint16_t dig_T1;
-	int16_t dig_T2;
-	int16_t dig_T3;
-
-	uint16_t dig_P1;
-	int16_t dig_P2;
-	int16_t dig_P3;
-	int16_t dig_P4;
-	int16_t dig_P5;
-	int16_t dig_P6;
-	int16_t dig_P7;
-	int16_t dig_P8;
-	int16_t dig_P9;
-
-	uint8_t dig_H1;
-	int16_t dig_H2;
-	uint8_t dig_H3;
-	int16_t dig_H4;
-	int16_t dig_H5;
-	int8_t dig_H6;
-};
-
 /** BME280 Driver Interface
  *
  * This driver supports both I2C and SPI communications. By default, the driver
@@ -306,6 +280,33 @@ class BME280
 	int16_t readRegisterInt16(uint8_t offset);
 	// Writes a byte;
 	void writeRegister(uint8_t, uint8_t);
+
+  private:
+	// Used to hold the calibration constants.  These are used
+	// by the driver as measurements are being taking
+	struct SensorCalibration
+	{
+		uint16_t dig_T1;
+		int16_t dig_T2;
+		int16_t dig_T3;
+
+		uint16_t dig_P1;
+		int16_t dig_P2;
+		int16_t dig_P3;
+		int16_t dig_P4;
+		int16_t dig_P5;
+		int16_t dig_P6;
+		int16_t dig_P7;
+		int16_t dig_P8;
+		int16_t dig_P9;
+
+		uint8_t dig_H1;
+		int16_t dig_H2;
+		uint8_t dig_H3;
+		int16_t dig_H4;
+		int16_t dig_H5;
+		int8_t dig_H6;
+	};
 
   private: // Private member variabels
 	/// Selection of I2C/SPI communication interface
