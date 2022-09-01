@@ -8,7 +8,8 @@ bosch_bme280_aardvark_hardware_platform_lib = static_library('hardware_platform'
  		bosch_bme280_virtual_devices_dep,
 		aardvark_vendor_native_driver_dep,
 		c_virtual_device_intf_dep
-	]
+	],
+	native: true
 )
 
 bosch_bme280_aardvark_hardware_platform_dep = declare_dependency(
