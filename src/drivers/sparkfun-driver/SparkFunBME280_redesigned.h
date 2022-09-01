@@ -110,6 +110,47 @@ class BME280
 		normal = 0b11,
 	};
 
+	/// Oversampling during measurement deraeses noise, but also
+	/// consumes more power.
+	enum class oversampling : uint8_t
+	{
+		/// None means "skip data altogether"
+		none = 0,
+		oversample_1x,
+		oversample_2x,
+		oversample_4x,
+		oversample_8x,
+		oversample_16x,
+	};
+
+	/// This controls the time between measurements on the BME280 sensor.
+	/// Higher times = lower power consumption.
+	enum class standby : uint8_t
+	{
+		for_0_5ms = 0,
+		for_62_5_ms,
+		for_125_ms,
+		for_250_ms,
+		for_500_ms,
+		for_1000_ms,
+		for_10_ms,
+		for_20_ms,
+	};
+
+	/// Filtering essentially changes the bandwidth of the
+	/// temperature and pressure output signals.
+	/// The output of the measurement step becomes:
+	/// data_filtered = (data_filtered_old * (filter_coefficient - 1) + data_ADC)/filter_coefficient
+	enum class filtering : uint8_t
+	{
+		/// Filter is turned off
+		off = 0,
+		coeff_2,
+		coeff_4,
+		coeff_8,
+		coeff_16
+	};
+
 	/** Prototype for the driver's write function abstraction
 	 *
 	 * Users of this driver must supply an implementation for the write function, which is what
@@ -200,11 +241,11 @@ class BME280
 	op_mode getMode(void); // Get the current mode: sleep, forced, or normal
 	void setMode(op_mode mode); // Set the current mode
 
-	void setTempOverSample(uint8_t overSampleAmount); // Set the temperature sample mode
-	void setPressureOverSample(uint8_t overSampleAmount); // Set the pressure sample mode
-	void setHumidityOverSample(uint8_t overSampleAmount); // Set the humidity sample mode
-	void setStandbyTime(uint8_t timeSetting); // Set the standby time between measurements
-	void setFilter(uint8_t filterSetting); // Set the filter
+	void setTempOverSample(oversampling overSampleAmount); // Set the temperature sample mode
+	void setPressureOverSample(oversampling overSampleAmount); // Set the pressure sample mode
+	void setHumidityOverSample(oversampling overSampleAmount); // Set the humidity sample mode
+	void setStandbyTime(standby timeSetting); // Set the standby time between measurements
+	void setFilter(filtering filterSetting); // Set the filter
 
 	bool isMeasuring(void); // Returns true while the device is taking measurement
 
@@ -244,8 +285,6 @@ class BME280
 
 	/// @returns true if the chip is valid (BME or BMA), false otherwise
 	bool checkChipID();
-
-	uint8_t checkSampleValue(uint8_t userValue); // Checks for valid over sample values
 
 	/// Converts from the raw sensor output to target representation
 	/// @param[in] raw_input the value returned from the BME280 sensor

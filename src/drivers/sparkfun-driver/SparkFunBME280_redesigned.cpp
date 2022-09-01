@@ -123,11 +123,11 @@ bool BME280::begin()
 	{
 		readCompensationData();
 
-		setStandbyTime(0); // 0.5ms
-		setFilter(0); // filter off
-		setPressureOverSample(1); // Default of 1x oversample
-		setHumidityOverSample(1); // Default of 1x oversample
-		setTempOverSample(1); // Default of 1x oversample
+		setStandbyTime(BME280::standby::for_0_5ms);
+		setFilter(BME280::filtering::off);
+		setPressureOverSample(BME280::oversampling::oversample_1x);
+		setHumidityOverSample(BME280::oversampling::oversample_1x);
+		setTempOverSample(BME280::oversampling::oversample_1x);
 
 		setMode(op_mode::normal); // Go!
 	}
@@ -175,14 +175,11 @@ BME280::op_mode BME280::getMode()
 //   5, 1000ms
 //   6, 10ms
 //   7, 20ms
-void BME280::setStandbyTime(uint8_t timeSetting)
+void BME280::setStandbyTime(BME280::standby timeSetting)
 {
-	if(timeSetting > 0b111)
-		timeSetting = 0; // Error check. Default to 0.5ms
-
 	uint8_t controlData = readRegister(BME280_CONFIG_REG);
 	controlData &= ~((1 << 7) | (1 << 6) | (1 << 5)); // Clear the 7/6/5 bits
-	controlData |= (timeSetting << 5); // Align with bits 7/6/5
+	controlData |= (static_cast<uint8_t>(timeSetting) << 5); // Align with bits 7/6/5
 	writeRegister(BME280_CONFIG_REG, controlData);
 }
 
@@ -193,91 +190,54 @@ void BME280::setStandbyTime(uint8_t timeSetting)
 //   2, coefficients = 4
 //   3, coefficients = 8
 //   4, coefficients = 16
-void BME280::setFilter(uint8_t filterSetting)
+void BME280::setFilter(BME280::filtering filterSetting)
 {
-	if(filterSetting > 0b111)
-		filterSetting = 0; // Error check. Default to filter off
-
 	uint8_t controlData = readRegister(BME280_CONFIG_REG);
 	controlData &= ~((1 << 4) | (1 << 3) | (1 << 2)); // Clear the 4/3/2 bits
-	controlData |= (filterSetting << 2); // Align with bits 4/3/2
+	controlData |= (static_cast<uint8_t>(filterSetting) << 2); // Align with bits 4/3/2
 	writeRegister(BME280_CONFIG_REG, controlData);
 }
 
 // Set the temperature oversample value
 // 0 turns off temp sensing
 // 1 to 16 are valid over sampling values
-void BME280::setTempOverSample(uint8_t overSampleAmount)
+void BME280::setTempOverSample(BME280::oversampling overSampleAmount)
 {
 	BME280SettingChangeProtector{*this};
-
-	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
 	// Set the osrs_t bits (7, 6, 5) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
 	controlData &= ~((1 << 7) | (1 << 6) | (1 << 5)); // Clear bits 765
-	controlData |= overSampleAmount << 5; // Align overSampleAmount to bits 7/6/5
+	controlData |= static_cast<uint8_t>(overSampleAmount)
+				   << 5; // Align overSampleAmount to bits 7/6/5
 	writeRegister(BME280_CTRL_MEAS_REG, controlData);
 }
 
 // Set the pressure oversample value
 // 0 turns off pressure sensing
 // 1 to 16 are valid over sampling values
-void BME280::setPressureOverSample(uint8_t overSampleAmount)
+void BME280::setPressureOverSample(BME280::oversampling overSampleAmount)
 {
 	BME280SettingChangeProtector{*this};
-
-	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
 	// Set the osrs_p bits (4, 3, 2) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
 	controlData &= ~((1 << 4) | (1 << 3) | (1 << 2)); // Clear bits 432
-	controlData |= overSampleAmount << 2; // Align overSampleAmount to bits 4/3/2
+	controlData |= static_cast<uint8_t>(overSampleAmount)
+				   << 2; // Align overSampleAmount to bits 4/3/2
 	writeRegister(BME280_CTRL_MEAS_REG, controlData);
 }
 
 // Set the humidity oversample value
 // 0 turns off humidity sensing
 // 1 to 16 are valid over sampling values
-void BME280::setHumidityOverSample(uint8_t overSampleAmount)
+void BME280::setHumidityOverSample(BME280::oversampling overSampleAmount)
 {
 	BME280SettingChangeProtector{*this};
-
-	overSampleAmount = checkSampleValue(overSampleAmount); // Error check
 	// Set the osrs_h bits (2, 1, 0) to overSampleAmount
 	uint8_t controlData = readRegister(BME280_CTRL_HUMIDITY_REG);
 	controlData &= ~((1 << 2) | (1 << 1) | (1 << 0)); // Clear bits 2/1/0
-	controlData |= overSampleAmount << 0; // Align overSampleAmount to bits 2/1/0
+	controlData |= static_cast<uint8_t>(overSampleAmount)
+				   << 0; // Align overSampleAmount to bits 2/1/0
 	writeRegister(BME280_CTRL_HUMIDITY_REG, controlData);
-}
-
-// Validates an over sample value
-// Allowed values are 0 to 16
-// These are used in the humidty, pressure, and temp oversample functions
-uint8_t BME280::checkSampleValue(uint8_t userValue)
-{
-	switch(userValue)
-	{
-		case(0):
-			return 0;
-			break; // Valid
-		case(1):
-			return 1;
-			break; // Valid
-		case(2):
-			return 2;
-			break; // Valid
-		case(4):
-			return 3;
-			break; // Valid
-		case(8):
-			return 4;
-			break; // Valid
-		case(16):
-			return 5;
-			break; // Valid
-		default:
-			return 1; // Default to 1x
-			break; // Good
-	}
 }
 
 // Check the measuring bit and return true while device is taking measurement
