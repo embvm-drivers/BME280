@@ -64,7 +64,7 @@ int main(void)
 	printf("Running BME280 example with the Aardvark I2C driver\n");
 	aardvark_initialize();
 
-	BME280 mySensor(aardvark_i2c_write, aardvark_i2c_read, I2C_MODE,
+	BME280 mySensor(aardvark_i2c_write, aardvark_i2c_read, BME280::comm_mode::I2C,
 					reinterpret_cast<void*>(&BME280_I2C_Addr_7bit));
 
 	bool initialized = mySensor.begin();

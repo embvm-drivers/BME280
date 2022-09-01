@@ -424,7 +424,7 @@ void BME280::readRegisterRegion(uint8_t* outputPointer, uint8_t offset, uint8_t 
 {
 	assert(read_);
 
-	if(commInterface_ == SPI_MODE)
+	if(commInterface_ == BME280::comm_mode::SPI)
 	{
 		offset |= 0x80; // set the read bit
 	}
@@ -456,7 +456,7 @@ void BME280::writeRegister(uint8_t offset, uint8_t dataToWrite)
 {
 	assert(write_);
 
-	if(commInterface_ == SPI_MODE)
+	if(commInterface_ == BME280::comm_mode::SPI)
 	{
 		offset &= 0x7F; // ensure offset does not include a read bit in position 0x80
 	}

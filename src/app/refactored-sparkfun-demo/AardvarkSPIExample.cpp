@@ -82,7 +82,7 @@ int main(void)
 	printf("Running BME280 example with the Aardvark SPI driver\n");
 	aardvark_initialize();
 
-	BME280 mySensor(aardvark_spi_write, aardvark_spi_read, SPI_MODE);
+	BME280 mySensor(aardvark_spi_write, aardvark_spi_read, BME280::comm_mode::SPI);
 
 	bool initialized = mySensor.begin();
 	assert(initialized);

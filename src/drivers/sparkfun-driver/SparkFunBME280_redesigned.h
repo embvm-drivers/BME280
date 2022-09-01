@@ -29,12 +29,6 @@ Distributed as-is; no warranty is given.
 #include <cstdint>
 #endif
 
-enum bme280_comm_mode
-{
-	I2C_MODE = 0,
-	SPI_MODE
-};
-
 struct BME280_SensorMeasurements
 {
 	float temperature;
@@ -76,6 +70,14 @@ struct BME280_SensorMeasurements
 class BME280
 {
   public:
+	/// Indicates whether the driver will communicate with the device
+	/// via SPI or I2C.
+	enum class comm_mode
+	{
+		I2C,
+		SPI
+	};
+
 	/// Operational modes supported by the BME280 part
 	enum class op_mode : uint8_t
 	{
@@ -185,7 +187,7 @@ class BME280
 	/// @param[in] private_data Optional pointer to user-specified private data. This value will
 	///		be supplied to both the read_func and write_func implementations.
 	BME280(write_func write_implementation, read_func read_implementation,
-		   bme280_comm_mode comm_mode = I2C_MODE, void* private_data = nullptr)
+		   comm_mode comm_mode = comm_mode::I2C, void* private_data = nullptr)
 		: commInterface_(comm_mode), write_(write_implementation), read_(read_implementation),
 		  private_data_(private_data)
 	{
@@ -310,7 +312,7 @@ class BME280
 
   private: // Private member variabels
 	/// Selection of I2C/SPI communication interface
-	bme280_comm_mode commInterface_;
+	comm_mode commInterface_;
 	/// correction of temperature - added to the result of the compensation calculation
 	float tempCorrection_ = 0.0f;
 	/// Implementation of the write_ abstraction
