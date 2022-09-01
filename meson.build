@@ -101,7 +101,9 @@ subdir('build/objcopy')
 
 # This dep needs to be refactored - currently pulls in emvbm, and it will fail to compile for cross buidl with AVR
 # because libc does not have AVR support. We do not need the embvm-core for this project at this time.
-if meson.is_cross_build() == false
+if meson.is_cross_build() == true
+	aardvark_vendor_native_driver_dep = disabler()
+else
 	aardvark_driver_subproject = subproject('aardvark')
 	aardvark_vendor_native_driver_dep = aardvark_driver_subproject.get_variable('aardvark_vendor_native_driver_dep')
 endif
