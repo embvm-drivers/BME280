@@ -90,9 +90,9 @@ int main(void)
 	int sample_count = 0;
 	while(sample_count++ < 20)
 	{
-		auto pressure = mySensor.readFloatPressure();
-		auto humidity = static_cast<double>(mySensor.readFloatHumidity());
-		auto temperature = static_cast<double>(mySensor.readTemp());
+		auto pressure = mySensor.readPressure();
+		auto humidity = static_cast<double>(mySensor.readHumidity());
+		auto temperature = static_cast<double>(mySensor.readTemperature());
 		auto altitude =
 			static_cast<double>(metersToFeet(calculateAltitude(static_cast<float>(pressure))));
 		auto dew_point = static_cast<double>(

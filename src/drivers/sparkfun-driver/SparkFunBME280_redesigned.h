@@ -211,6 +211,7 @@ class BME280
 	bool begin();
 
 	/// Perform a software reset
+	/// Run .begin() afterwards to use the device.
 	void reset(void);
 
 	/// Read the current operating mode from the device.
@@ -218,14 +219,15 @@ class BME280
 	/// Set a new operating mode on the device
 	void setMode(op_mode mode);
 
-	/// Read all values at once
+	/// Read all sensor registers as a burst. See BME280 Datasheet section 4. Data readout
 	void readAllMeasurements(BME280::Measurements& measurements);
 	/// Read the current pressure from the device
-	float readFloatPressure(void);
+	float readPressure(void);
 	/// Read the current humidity from the device
-	float readFloatHumidity(void);
+	float readHumidity(void);
 	/// Read the current temperature from the device
-	float readTemp(void);
+	float readTemperature(void);
+	/// Checks the measuring bit on the device.
 	/// @returns true if the device is currently making a measurement
 	bool isMeasuring(void);
 
@@ -244,51 +246,7 @@ class BME280
 	/// Set the device-side filter coefficient (default: off)
 	void setFilter(filtering filterSetting);
 
-  private:
-	/// Read calibration/compensation info from the device.
-	/// This function only needs to be called once (part of begin())
-	void readCompensationData();
-
-	/// @returns true if the chip is valid (BME or BMA), false otherwise
-	bool checkChipID();
-
-	/// Converts from the raw sensor output to target representation
-	/// @param[in] raw_input the value returned from the BME280 sensor
-	/// @returns humidity in %RH
-	float convertHumidity(int32_t raw_input);
-
-	/// Converts from the raw sensor output to the °C
-	/// This routine performs compensation as well, as described in the datasheet.
-	/// @returns temperature in °C
-	float convertTemperature(int32_t raw_input);
-
-	/// Converts from the raw sensor output to pressure
-	/// This routine performs compensation for temperature, as described in the datasheet.
-	/// @returns pressure in Pascals (Pa)
-	float convertPressure(int32_t raw_input);
-
-	int32_t assembleRawTempPressure(uint8_t* bytes);
-	int32_t assembleRawHumidity(uint8_t* bytes);
-
-	void readFloatPressureFromBurst(uint8_t buffer[], Measurements& measurements);
-	void readTempFromBurst(uint8_t buffer[], Measurements& measurements);
-	void readFloatHumidityFromBurst(uint8_t buffer[], Measurements& measurements);
-
-	// ReadRegisterRegion takes a uint8 array address as input and reads
-	// a chunk of memory into that array.
-	void readRegisterRegion(uint8_t*, uint8_t, uint8_t);
-	// readRegister reads one register
-	uint8_t readRegister(uint8_t);
-	// Reads two regs, LSByte then MSByte order, and concatenates them
-	// Used for two-byte reads
-	int16_t readRegisterInt16(uint8_t offset);
-	// Writes a byte;
-	void writeRegister(uint8_t, uint8_t);
-
-	void UpdateRegisterField(const uint8_t reg_addr, const uint8_t mask, const uint8_t shift,
-							 const uint8_t data);
-
-  private:
+  public:
 	// Used to hold the calibration constants.  These are used
 	// by the driver as measurements are being taking
 	struct SensorCalibration
@@ -329,6 +287,10 @@ class BME280
 	void* private_data_ = nullptr;
 	SensorCalibration calibration;
 	int32_t t_fine;
+
+	// This class handles some internal details, keeping these interfaces out
+	// of the header while still accessing instance-specific config/calibration information.
+	friend class BME280Internals;
 };
 
 #endif // End of __BME280_H__ definition check

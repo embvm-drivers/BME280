@@ -33,205 +33,55 @@ Distributed as-is; no warranty is given.
 #include <cstring>
 #endif
 
-class BME280SettingChangeProtector
+static int32_t assembleRawTempPressure(uint8_t* bytes)
 {
-  public:
-	BME280SettingChangeProtector(BME280& inst) : inst_(inst)
-	{
-		// Get the current mode so we can go back to it at the end
-		originalMode = inst_.getMode();
-
-		// Config will only be writeable in sleep mode, so first go to sleep mode
-		inst_.setMode(BME280::op_mode::sleep);
-	}
-
-	~BME280SettingChangeProtector()
-	{
-		// Return to the original user's choice
-		inst_.setMode(originalMode);
-	}
-
-  private:
-	BME280& inst_;
-	BME280::op_mode originalMode;
-};
-
-//****************************************************************************//
-//
-//  Settings and configuration
-//
-//****************************************************************************//
-
-void BME280::readCompensationData()
-{
-	// Reading all compensation data, range 0x88:A1, 0xE1:E7
-	calibration.dig_T1 = ((uint16_t)((readRegister(BME280_DIG_T1_MSB_REG) << 8) +
-									 readRegister(BME280_DIG_T1_LSB_REG)));
-	calibration.dig_T2 = ((int16_t)((readRegister(BME280_DIG_T2_MSB_REG) << 8) +
-									readRegister(BME280_DIG_T2_LSB_REG)));
-	calibration.dig_T3 = ((int16_t)((readRegister(BME280_DIG_T3_MSB_REG) << 8) +
-									readRegister(BME280_DIG_T3_LSB_REG)));
-
-	calibration.dig_P1 = ((uint16_t)((readRegister(BME280_DIG_P1_MSB_REG) << 8) +
-									 readRegister(BME280_DIG_P1_LSB_REG)));
-	calibration.dig_P2 = ((int16_t)((readRegister(BME280_DIG_P2_MSB_REG) << 8) +
-									readRegister(BME280_DIG_P2_LSB_REG)));
-	calibration.dig_P3 = ((int16_t)((readRegister(BME280_DIG_P3_MSB_REG) << 8) +
-									readRegister(BME280_DIG_P3_LSB_REG)));
-	calibration.dig_P4 = ((int16_t)((readRegister(BME280_DIG_P4_MSB_REG) << 8) +
-									readRegister(BME280_DIG_P4_LSB_REG)));
-	calibration.dig_P5 = ((int16_t)((readRegister(BME280_DIG_P5_MSB_REG) << 8) +
-									readRegister(BME280_DIG_P5_LSB_REG)));
-	calibration.dig_P6 = ((int16_t)((readRegister(BME280_DIG_P6_MSB_REG) << 8) +
-									readRegister(BME280_DIG_P6_LSB_REG)));
-	calibration.dig_P7 = ((int16_t)((readRegister(BME280_DIG_P7_MSB_REG) << 8) +
-									readRegister(BME280_DIG_P7_LSB_REG)));
-	calibration.dig_P8 = ((int16_t)((readRegister(BME280_DIG_P8_MSB_REG) << 8) +
-									readRegister(BME280_DIG_P8_LSB_REG)));
-	calibration.dig_P9 = ((int16_t)((readRegister(BME280_DIG_P9_MSB_REG) << 8) +
-									readRegister(BME280_DIG_P9_LSB_REG)));
-
-	calibration.dig_H1 = ((uint8_t)(readRegister(BME280_DIG_H1_REG)));
-	calibration.dig_H2 = ((int16_t)((readRegister(BME280_DIG_H2_MSB_REG) << 8) +
-									readRegister(BME280_DIG_H2_LSB_REG)));
-	calibration.dig_H3 = ((uint8_t)(readRegister(BME280_DIG_H3_REG)));
-	calibration.dig_H4 = ((int16_t)((readRegister(BME280_DIG_H4_MSB_REG) << 4) +
-									(readRegister(BME280_DIG_H4_LSB_REG) & 0x0F)));
-	calibration.dig_H5 = ((int16_t)((readRegister(BME280_DIG_H5_MSB_REG) << 4) +
-									((readRegister(BME280_DIG_H4_LSB_REG) >> 4) & 0x0F)));
-	calibration.dig_H6 = ((int8_t)readRegister(BME280_DIG_H6_REG));
+	return ((uint32_t)bytes[0] << 12) | ((uint32_t)bytes[1] << 4) | ((bytes[2] >> 4) & 0x0F);
 }
 
-bool BME280::checkChipID()
+static int32_t assembleRawHumidity(uint8_t* bytes)
 {
-	bool valid = false;
-
-	uint8_t chipID = readRegister(BME280_CHIP_ID_REG);
-	if(chipID == 0x58 || chipID == 0x60) // Is this BMP or BME?
-	{
-		valid = true;
-	}
-
-	return valid;
+	return ((uint32_t)bytes[0] << 8) | ((uint32_t)bytes[1]);
 }
 
-bool BME280::begin()
+/// Converts from the raw sensor output to the °C
+/// This routine performs compensation as well, as described in the datasheet.
+/// @param[in] raw_input The raw value returned from the sensor
+/// @param[in] calibration The BME280 sensor calibration data for the target component
+/// @param[out] t_fine Reference to the t_fine variable in the BME280 sensor instance,
+///		which will be updated with the fine-resolution temperature calculation
+/// use.
+/// @returns temperature in °C
+static float convertTemperature(int32_t raw_input, const BME280::SensorCalibration& calibration,
+								int32_t& t_fine)
 {
-	bool chip_valid = checkChipID();
+	// By datasheet, calibrate
+	int64_t var1, var2;
 
-	if(chip_valid)
-	{
-		readCompensationData();
+	var1 = ((((raw_input >> 3) - ((int32_t)calibration.dig_T1 << 1))) *
+			((int32_t)calibration.dig_T2)) >>
+		   11;
+	var2 = (((((raw_input >> 4) - ((int32_t)calibration.dig_T1)) *
+			  ((raw_input >> 4) - ((int32_t)calibration.dig_T1))) >>
+			 12) *
+			((int32_t)calibration.dig_T3)) >>
+		   14;
+	t_fine = var1 + var2;
 
-		setStandbyTime(BME280::standby::for_0_5ms);
-		setFilter(BME280::filtering::off);
-		setPressureOverSample(BME280::oversampling::oversample_1x);
-		setHumidityOverSample(BME280::oversampling::oversample_1x);
-		setTempOverSample(BME280::oversampling::oversample_1x);
+	float output = (t_fine * 5 + 128) >> 8;
+	output = output / 100;
 
-		setMode(op_mode::normal); // Go!
-	}
-
-	return chip_valid;
+	return output;
 }
 
-BME280::op_mode BME280::getMode()
-{
-	uint8_t controlData = readRegister(BME280_CTRL_MEAS_REG);
-	uint8_t mode_bits = (controlData & 0b00000011); // Clear bits 7 through 2
-
-	BME280::op_mode mode;
-	switch(mode_bits)
-	{
-		case static_cast<uint8_t>(BME280::op_mode::normal):
-		case static_cast<uint8_t>(BME280::op_mode::forced):
-		case static_cast<uint8_t>(BME280::op_mode::sleep):
-			mode = static_cast<BME280::op_mode>(mode_bits);
-			break;
-		default:
-			assert(0); // Unexpected value!
-	}
-
-	return mode;
-}
-
-void BME280::setMode(BME280::op_mode mode)
-{
-	UpdateRegisterField(BME280_CTRL_MEAS_REG, BME280_CONFIG_MODE_MASK, BME280_CONFIG_MODE_SHIFT,
-						static_cast<uint8_t>(mode));
-}
-
-void BME280::setStandbyTime(BME280::standby timeSetting)
-{
-	UpdateRegisterField(BME280_CONFIG_REG, BME280_CONFIG_STANDBY_MASK, BME280_CONFIG_STANDBY_SHIFT,
-						static_cast<uint8_t>(timeSetting));
-}
-
-void BME280::setFilter(BME280::filtering filterSetting)
-{
-	UpdateRegisterField(BME280_CONFIG_REG, BME280_CONFIG_FILTER_MASK, BME280_CONFIG_FILTER_SHIFT,
-						static_cast<uint8_t>(filterSetting));
-}
-
-void BME280::setTempOverSample(BME280::oversampling overSampleAmount)
-{
-	BME280SettingChangeProtector{*this};
-	UpdateRegisterField(BME280_CTRL_MEAS_REG, BME280_CTRL_OVERSAMPLE_MASK,
-						BME280_CTRL_TEMPERATURE_OVERSAMPLE_SHIFT,
-						static_cast<uint8_t>(overSampleAmount));
-}
-
-void BME280::setPressureOverSample(BME280::oversampling overSampleAmount)
-{
-	BME280SettingChangeProtector{*this};
-	UpdateRegisterField(BME280_CTRL_MEAS_REG, BME280_CTRL_OVERSAMPLE_MASK,
-						BME280_CTRL_PRESSURE_OVERSAMPLE_SHIFT,
-						static_cast<uint8_t>(overSampleAmount));
-}
-
-void BME280::setHumidityOverSample(BME280::oversampling overSampleAmount)
-{
-	BME280SettingChangeProtector{*this};
-	UpdateRegisterField(BME280_CTRL_HUMIDITY_REG, BME280_CTRL_OVERSAMPLE_MASK,
-						BME280_CTRL_HUMIDITY_OVERSAMPLE_SHIFT,
-						static_cast<uint8_t>(overSampleAmount));
-}
-
-// Check the measuring bit and return true while device is taking measurement
-bool BME280::isMeasuring(void)
-{
-	uint8_t stat = readRegister(BME280_STAT_REG);
-	return (stat & BME280_STAT_STATUS_MASK);
-}
-
-// Strictly resets.  Run .begin() afterwards
-void BME280::reset(void)
-{
-	writeRegister(BME280_RST_REG, 0xB6);
-}
-
-//****************************************************************************//
-//
-//  Burst Measurement Section
-//
-//****************************************************************************//
-
-// Read all sensor registers as a burst. See BME280 Datasheet section 4. Data readout
-void BME280::readAllMeasurements(BME280::Measurements& measurements)
-{
-	uint8_t dataBurst[8];
-	readRegisterRegion(dataBurst, BME280_MEASUREMENTS_REG, 8);
-	readTempFromBurst(dataBurst, measurements);
-	readFloatPressureFromBurst(dataBurst, measurements);
-	readFloatHumidityFromBurst(dataBurst, measurements);
-}
-
-//****************************************************************************//
-//
-//  Pressure Section
-//
-//****************************************************************************//
-float BME280::convertPressure(int32_t raw_input)
+/// Converts from the raw sensor output to pressure
+/// This routine performs compensation for temperature, as described in the datasheet.
+/// @param[in] raw_input The raw value returned from the sensor
+/// @param[in] calibration The BME280 sensor calibration data for the target component
+/// @param[in] t_fine Reference to the t_fine variable in the BME280 sensor instance
+/// use.
+/// @returns pressure in Pascals (Pa)
+static float convertPressure(int32_t raw_input, const BME280::SensorCalibration& calibration,
+							 const int32_t t_fine)
 {
 	int64_t var1, var2, p_acc;
 	var1 = ((int64_t)t_fine) - 128000;
@@ -251,33 +101,20 @@ float BME280::convertPressure(int32_t raw_input)
 	var2 = (((int64_t)calibration.dig_P8) * p_acc) >> 19;
 
 	// Returns pressure in Pa as unsigned 32 bit integer in Q24.8 format (24 integer bits and 8
-	// fractional bits). Output value of “24674867” represents 24674867/256 = 96386.2 Pa = 963.862
-	// hPa
+	// fractional bits). Output value of “24674867” represents 24674867/256 = 96386.2 Pa =
+	// 963.862 hPa
 	p_acc = ((p_acc + var1 + var2) >> 8) + (((int64_t)calibration.dig_P7) << 4);
 
 	return (float)p_acc / 256.0f;
 }
 
-float BME280::readFloatPressure(void)
-{
-	uint8_t buffer[3];
-	readRegisterRegion(buffer, BME280_PRESSURE_MSB_REG, 3);
-	int32_t adc_P = assembleRawTempPressure(buffer);
-	return convertPressure(adc_P);
-}
-
-void BME280::readFloatPressureFromBurst(uint8_t buffer[], BME280::Measurements& measurements)
-{
-	int32_t adc_P = assembleRawTempPressure(buffer);
-	measurements.pressure = convertPressure(adc_P);
-}
-
-//****************************************************************************//
-//
-//  Humidity Section
-//
-//****************************************************************************//
-float BME280::convertHumidity(int32_t raw_input)
+/// Converts from the raw sensor output to target representation
+/// @param[in] raw_input The raw value returned from the sensor
+/// @param[in] calibration The BME280 sensor calibration data for the target component
+/// @param[in] t_fine Reference to the t_fine variable in the BME280 sensor instance
+/// @returns humidity in %RH
+static float convertHumidity(int32_t raw_input, const BME280::SensorCalibration& calibration,
+							 const int32_t t_fine)
 {
 	int32_t var1 = (t_fine - ((int32_t)76800));
 	var1 = (((((raw_input << 14) - (((int32_t)calibration.dig_H4) << 20) -
@@ -302,130 +139,298 @@ float BME280::convertHumidity(int32_t raw_input)
 	return (float)(var1 >> 12) / 1024.0f;
 }
 
-float BME280::readFloatHumidity(void)
+static float readPressureFromBurst(uint8_t buffer[], const BME280::SensorCalibration& calibration,
+								   const int32_t t_fine)
 {
-	uint8_t buffer[2];
-	readRegisterRegion(buffer, BME280_HUMIDITY_MSB_REG, 2);
-	int32_t adc_H = assembleRawHumidity(buffer);
-	return convertHumidity(adc_H);
+	int32_t adc_P = assembleRawTempPressure(buffer);
+	return convertPressure(adc_P, calibration, t_fine);
 }
 
-void BME280::readFloatHumidityFromBurst(uint8_t buffer[], BME280::Measurements& measurements)
+static float readTemperatureFromBurst(uint8_t buffer[],
+									  const BME280::SensorCalibration& calibration, int32_t& t_fine)
+{
+	int32_t adc_T = assembleRawTempPressure(&buffer[3]);
+	return convertTemperature(adc_T, calibration, t_fine);
+}
+
+static float readHumidityFromBurst(uint8_t buffer[], const BME280::SensorCalibration& calibration,
+								   const int32_t t_fine)
 {
 	int32_t adc_H = assembleRawHumidity(&buffer[6]);
-	measurements.humidity = convertHumidity(adc_H);
+	return convertHumidity(adc_H, calibration, t_fine);
 }
+
+class BME280SettingChangeProtector
+{
+  public:
+	BME280SettingChangeProtector(BME280& inst) : inst_(inst)
+	{
+		// Get the current mode so we can go back to it at the end
+		originalMode = inst_.getMode();
+
+		// Config will only be writeable in sleep mode, so first go to sleep mode
+		inst_.setMode(BME280::op_mode::sleep);
+	}
+
+	~BME280SettingChangeProtector()
+	{
+		// Return to the original user's choice
+		inst_.setMode(originalMode);
+	}
+
+  private:
+	BME280& inst_;
+	BME280::op_mode originalMode;
+};
+
+class BME280Internals
+{
+  public:
+	static void readCompensationData(BME280& inst)
+	{
+		auto calibration = inst.calibration;
+		// Reading all compensation data, range 0x88:A1, 0xE1:E7
+		calibration.dig_T1 = ((uint16_t)((readRegister(inst, BME280_DIG_T1_MSB_REG) << 8) +
+										 readRegister(inst, BME280_DIG_T1_LSB_REG)));
+		calibration.dig_T2 = ((int16_t)((readRegister(inst, BME280_DIG_T2_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_T2_LSB_REG)));
+		calibration.dig_T3 = ((int16_t)((readRegister(inst, BME280_DIG_T3_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_T3_LSB_REG)));
+
+		calibration.dig_P1 = ((uint16_t)((readRegister(inst, BME280_DIG_P1_MSB_REG) << 8) +
+										 readRegister(inst, BME280_DIG_P1_LSB_REG)));
+		calibration.dig_P2 = ((int16_t)((readRegister(inst, BME280_DIG_P2_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_P2_LSB_REG)));
+		calibration.dig_P3 = ((int16_t)((readRegister(inst, BME280_DIG_P3_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_P3_LSB_REG)));
+		calibration.dig_P4 = ((int16_t)((readRegister(inst, BME280_DIG_P4_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_P4_LSB_REG)));
+		calibration.dig_P5 = ((int16_t)((readRegister(inst, BME280_DIG_P5_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_P5_LSB_REG)));
+		calibration.dig_P6 = ((int16_t)((readRegister(inst, BME280_DIG_P6_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_P6_LSB_REG)));
+		calibration.dig_P7 = ((int16_t)((readRegister(inst, BME280_DIG_P7_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_P7_LSB_REG)));
+		calibration.dig_P8 = ((int16_t)((readRegister(inst, BME280_DIG_P8_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_P8_LSB_REG)));
+		calibration.dig_P9 = ((int16_t)((readRegister(inst, BME280_DIG_P9_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_P9_LSB_REG)));
+
+		calibration.dig_H1 = ((uint8_t)(readRegister(inst, BME280_DIG_H1_REG)));
+		calibration.dig_H2 = ((int16_t)((readRegister(inst, BME280_DIG_H2_MSB_REG) << 8) +
+										readRegister(inst, BME280_DIG_H2_LSB_REG)));
+		calibration.dig_H3 = ((uint8_t)(readRegister(inst, BME280_DIG_H3_REG)));
+		calibration.dig_H4 = ((int16_t)((readRegister(inst, BME280_DIG_H4_MSB_REG) << 4) +
+										(readRegister(inst, BME280_DIG_H4_LSB_REG) & 0x0F)));
+		calibration.dig_H5 = ((int16_t)((readRegister(inst, BME280_DIG_H5_MSB_REG) << 4) +
+										((readRegister(inst, BME280_DIG_H4_LSB_REG) >> 4) & 0x0F)));
+		calibration.dig_H6 = ((int8_t)readRegister(inst, BME280_DIG_H6_REG));
+	}
+
+	static bool checkChipID(const BME280& inst)
+	{
+		bool valid = false;
+
+		uint8_t chipID = readRegister(inst, BME280_CHIP_ID_REG);
+		if(chipID == 0x58 || chipID == 0x60) // Is this BMP or BME?
+		{
+			valid = true;
+		}
+
+		return valid;
+	}
+
+	static void UpdateRegisterField(const BME280& inst, const uint8_t reg_addr, const uint8_t mask,
+									const uint8_t shift, const uint8_t data)
+	{
+		uint8_t register_data = readRegister(inst, reg_addr);
+		register_data &= ~(mask << shift);
+		register_data |= (data & mask) << shift;
+		writeRegister(inst, reg_addr, register_data);
+	}
+
+	static void readRegisterRegion(const BME280& inst, uint8_t* outputPointer, uint8_t offset,
+								   uint8_t length)
+	{
+		assert(inst.read_);
+
+		if(inst.commInterface_ == BME280::comm_mode::SPI)
+		{
+			offset |= 0x80; // set the read bit
+		}
+
+		memset(outputPointer, 0, length);
+
+		inst.read_(offset, outputPointer, length, inst.private_data_);
+	}
+
+	static uint8_t readRegister(const BME280& inst, uint8_t offset)
+	{
+		uint8_t value = 0;
+
+		readRegisterRegion(inst, &value, offset, 1);
+
+		return value;
+	}
+
+	static int16_t readRegisterInt16(const BME280& inst, uint8_t offset)
+	{
+		uint8_t myBuffer[2];
+		readRegisterRegion(inst, myBuffer, offset, 2); // Does memory transfer
+		int16_t output = (int16_t)myBuffer[0] | int16_t(myBuffer[1] << 8);
+
+		return output;
+	}
+
+	static void writeRegister(const BME280& inst, uint8_t offset, uint8_t dataToWrite)
+	{
+		assert(inst.write_);
+
+		if(inst.commInterface_ == BME280::comm_mode::SPI)
+		{
+			offset &= 0x7F; // ensure offset does not include a read bit in position 0x80
+		}
+
+		inst.write_(offset, dataToWrite, inst.private_data_);
+	}
+};
 
 //****************************************************************************//
 //
-//  Temperature Section
+//  Settings and configuration
 //
 //****************************************************************************//
+
+bool BME280::begin()
+{
+	bool chip_valid = BME280Internals::checkChipID(*this);
+
+	if(chip_valid)
+	{
+		BME280Internals::readCompensationData(*this);
+
+		setStandbyTime(BME280::standby::for_0_5ms);
+		setFilter(BME280::filtering::off);
+		setPressureOverSample(BME280::oversampling::oversample_1x);
+		setHumidityOverSample(BME280::oversampling::oversample_1x);
+		setTempOverSample(BME280::oversampling::oversample_1x);
+
+		setMode(op_mode::normal); // Go!
+	}
+
+	return chip_valid;
+}
+
+BME280::op_mode BME280::getMode()
+{
+	uint8_t controlData = BME280Internals::readRegister(*this, BME280_CTRL_MEAS_REG);
+	uint8_t mode_bits = (controlData & 0b00000011); // Clear bits 7 through 2
+
+	BME280::op_mode mode;
+	switch(mode_bits)
+	{
+		case static_cast<uint8_t>(BME280::op_mode::normal):
+		case static_cast<uint8_t>(BME280::op_mode::forced):
+		case static_cast<uint8_t>(BME280::op_mode::sleep):
+			mode = static_cast<BME280::op_mode>(mode_bits);
+			break;
+		default:
+			assert(0); // Unexpected value!
+	}
+
+	return mode;
+}
+
+void BME280::setMode(BME280::op_mode mode)
+{
+	BME280Internals::UpdateRegisterField(*this, BME280_CTRL_MEAS_REG, BME280_CONFIG_MODE_MASK,
+										 BME280_CONFIG_MODE_SHIFT, static_cast<uint8_t>(mode));
+}
+
+void BME280::setStandbyTime(BME280::standby timeSetting)
+{
+	BME280Internals::UpdateRegisterField(*this, BME280_CONFIG_REG, BME280_CONFIG_STANDBY_MASK,
+										 BME280_CONFIG_STANDBY_SHIFT,
+										 static_cast<uint8_t>(timeSetting));
+}
+
+void BME280::setFilter(BME280::filtering filterSetting)
+{
+	BME280Internals::UpdateRegisterField(*this, BME280_CONFIG_REG, BME280_CONFIG_FILTER_MASK,
+										 BME280_CONFIG_FILTER_SHIFT,
+										 static_cast<uint8_t>(filterSetting));
+}
+
+void BME280::setTempOverSample(BME280::oversampling overSampleAmount)
+{
+	BME280SettingChangeProtector{*this};
+	BME280Internals::UpdateRegisterField(*this, BME280_CTRL_MEAS_REG, BME280_CTRL_OVERSAMPLE_MASK,
+										 BME280_CTRL_TEMPERATURE_OVERSAMPLE_SHIFT,
+										 static_cast<uint8_t>(overSampleAmount));
+}
+
+void BME280::setPressureOverSample(BME280::oversampling overSampleAmount)
+{
+	BME280SettingChangeProtector{*this};
+	BME280Internals::UpdateRegisterField(*this, BME280_CTRL_MEAS_REG, BME280_CTRL_OVERSAMPLE_MASK,
+										 BME280_CTRL_PRESSURE_OVERSAMPLE_SHIFT,
+										 static_cast<uint8_t>(overSampleAmount));
+}
+
+void BME280::setHumidityOverSample(BME280::oversampling overSampleAmount)
+{
+	BME280SettingChangeProtector{*this};
+	BME280Internals::UpdateRegisterField(
+		*this, BME280_CTRL_HUMIDITY_REG, BME280_CTRL_OVERSAMPLE_MASK,
+		BME280_CTRL_HUMIDITY_OVERSAMPLE_SHIFT, static_cast<uint8_t>(overSampleAmount));
+}
+
+bool BME280::isMeasuring(void)
+{
+	uint8_t stat = BME280Internals::readRegister(*this, BME280_STAT_REG);
+	return (stat & BME280_STAT_STATUS_MASK);
+}
+
+void BME280::reset(void)
+{
+	BME280Internals::writeRegister(*this, BME280_RST_REG, 0xB6);
+}
+
+void BME280::readAllMeasurements(BME280::Measurements& measurements)
+{
+	uint8_t dataBurst[8];
+	BME280Internals::readRegisterRegion(*this, dataBurst, BME280_MEASUREMENTS_REG, 8);
+	measurements.temperature =
+		readTemperatureFromBurst(dataBurst, calibration, t_fine) + tempCorrection_;
+	measurements.pressure = readPressureFromBurst(dataBurst, calibration, t_fine);
+	measurements.humidity = readHumidityFromBurst(dataBurst, calibration, t_fine);
+}
+
+float BME280::readPressure(void)
+{
+	uint8_t buffer[3];
+	BME280Internals::readRegisterRegion(*this, buffer, BME280_PRESSURE_MSB_REG, 3);
+	int32_t adc_P = assembleRawTempPressure(buffer);
+	return convertPressure(adc_P, calibration, t_fine);
+}
+
+float BME280::readHumidity(void)
+{
+	uint8_t buffer[2];
+	BME280Internals::readRegisterRegion(*this, buffer, BME280_HUMIDITY_MSB_REG, 2);
+	int32_t adc_H = assembleRawHumidity(buffer);
+	return convertHumidity(adc_H, calibration, t_fine);
+}
 
 void BME280::setTemperatureCorrection(float corr)
 {
 	tempCorrection_ = corr;
 }
 
-float BME280::convertTemperature(int32_t raw_input)
-{
-	// By datasheet, calibrate
-	int64_t var1, var2;
-
-	var1 = ((((raw_input >> 3) - ((int32_t)calibration.dig_T1 << 1))) *
-			((int32_t)calibration.dig_T2)) >>
-		   11;
-	var2 = (((((raw_input >> 4) - ((int32_t)calibration.dig_T1)) *
-			  ((raw_input >> 4) - ((int32_t)calibration.dig_T1))) >>
-			 12) *
-			((int32_t)calibration.dig_T3)) >>
-		   14;
-	t_fine = var1 + var2;
-
-	float output = (t_fine * 5 + 128) >> 8;
-	output = output / 100 + tempCorrection_;
-
-	return output;
-}
-
-float BME280::readTemp(void)
+float BME280::readTemperature(void)
 {
 	uint8_t buffer[3];
-	readRegisterRegion(buffer, BME280_TEMPERATURE_MSB_REG, 3);
+	BME280Internals::readRegisterRegion(*this, buffer, BME280_TEMPERATURE_MSB_REG, 3);
 	int32_t adc_T = assembleRawTempPressure(buffer);
-	return convertTemperature(adc_T);
-}
-
-void BME280::readTempFromBurst(uint8_t buffer[], BME280::Measurements& measurements)
-{
-	int32_t adc_T = assembleRawTempPressure(&buffer[3]);
-	measurements.temperature = convertTemperature(adc_T);
-}
-
-//****************************************************************************//
-//
-//  Utility
-//
-//****************************************************************************//
-void BME280::UpdateRegisterField(const uint8_t reg_addr, const uint8_t mask, const uint8_t shift,
-								 const uint8_t data)
-{
-	uint8_t register_data = readRegister(reg_addr);
-	register_data &= ~(mask << shift);
-	register_data |= (data & mask) << shift;
-	writeRegister(reg_addr, register_data);
-}
-
-int32_t BME280::assembleRawTempPressure(uint8_t* bytes)
-{
-	return ((uint32_t)bytes[0] << 12) | ((uint32_t)bytes[1] << 4) | ((bytes[2] >> 4) & 0x0F);
-}
-
-int32_t BME280::assembleRawHumidity(uint8_t* bytes)
-{
-	return ((uint32_t)bytes[0] << 8) | ((uint32_t)bytes[1]);
-}
-
-void BME280::readRegisterRegion(uint8_t* outputPointer, uint8_t offset, uint8_t length)
-{
-	assert(read_);
-
-	if(commInterface_ == BME280::comm_mode::SPI)
-	{
-		offset |= 0x80; // set the read bit
-	}
-
-	memset(outputPointer, 0, length);
-
-	read_(offset, outputPointer, length, private_data_);
-}
-
-uint8_t BME280::readRegister(uint8_t offset)
-{
-	uint8_t value = 0;
-
-	readRegisterRegion(&value, offset, 1);
-
-	return value;
-}
-
-int16_t BME280::readRegisterInt16(uint8_t offset)
-{
-	uint8_t myBuffer[2];
-	readRegisterRegion(myBuffer, offset, 2); // Does memory transfer
-	int16_t output = (int16_t)myBuffer[0] | int16_t(myBuffer[1] << 8);
-
-	return output;
-}
-
-void BME280::writeRegister(uint8_t offset, uint8_t dataToWrite)
-{
-	assert(write_);
-
-	if(commInterface_ == BME280::comm_mode::SPI)
-	{
-		offset &= 0x7F; // ensure offset does not include a read bit in position 0x80
-	}
-
-	write_(offset, dataToWrite, private_data_);
+	return convertTemperature(adc_T, calibration, t_fine) + tempCorrection_;
 }
