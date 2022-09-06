@@ -204,6 +204,12 @@ class BME280
 	 * 	- The communication bus has been properly configured and initialized
 	 *  - Valid  implementations of write_func and read_func have been supplied
 	 *
+	 * @post The device is initialized, calibration data has been read from the device,
+	 * 	and the following default settings have been supplied:
+	 * 	- Standby time of 0.5ms
+	 *  - filtering off
+	 *  - 1x temperature, pressure, and humidity oversampling
+	 *
 	 * @returns
 	 * 	- true if the device was initialized and a valid chip ID was detected
 	 *  - false otherwise
@@ -273,7 +279,7 @@ class BME280
 		int8_t dig_H6;
 	};
 
-  private: // Private member variabels
+  private:
 	/// Selection of I2C/SPI communication interface
 	comm_mode commInterface_;
 	/// correction of temperature - added to the result of the compensation calculation
