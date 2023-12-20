@@ -142,35 +142,14 @@ subdir('meson/test/catch2')
 # Tooling Modules #
 ###################
 
-subdir('meson/analysis/clang-tidy')
-subdir('meson/analysis/complexity')
-subdir('meson/analysis/cppcheck')
-subdir('meson/analysis/sloccount')
-subdir('meson/analysis/vale')
-subdir('meson/format')
-subdir('meson/docs/doxygen')
-
-#############
-# Packaging #
-#############
-
-# These macros allow you to simplify the declaration of includes for common
-# include paths. Examples:
-#	build_root_include.format('doc'),
-#	app_include.format('APP')
-build_root_include = meson.project_build_root() + ':@0@'
-app_include = meson.project_build_root() / 'src/app:@0@'
-lib_include = meson.project_build_root() / 'src/lib:@0@'
-
-host_pkg_files = [
-	build_root_include.format('docs'),
-	app_include.format('APP')
-]
-
-native_pkg_files = [
-	build_root_include.format('docs'),
-	app_include.format('APP_native')
-]
-
-# Invoke the package module
-subdir('meson/package')
+# We only need to run these tools if we are the primary project.
+# This reduces config time and target clutting when in subproject mode.
+if meson.is_subproject() == false
+	subdir('meson/analysis/clang-tidy')
+	subdir('meson/analysis/complexity')
+	subdir('meson/analysis/cppcheck')
+	subdir('meson/analysis/sloccount')
+	subdir('meson/analysis/vale')
+	subdir('meson/format')
+	subdir('meson/docs/doxygen')
+endif
