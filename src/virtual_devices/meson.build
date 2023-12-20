@@ -9,7 +9,8 @@ bosch_bme280_virtual_devices_lib = static_library('bosch_bme280_virtual_devices'
 		c_virtual_device_intf_dep,
 		c_linked_list_dep,
 	],
-	c_args: '-DVIRTUAL_BME280_VERBOSE_SAMPLING_PRINTS'
+	c_args: '-DVIRTUAL_BME280_VERBOSE_SAMPLING_PRINTS',
+	build_by_default: meson.is_subproject() == false
 )
 
 bosch_bme280_virtual_devices_dep = declare_dependency(

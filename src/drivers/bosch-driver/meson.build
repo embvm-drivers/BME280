@@ -8,7 +8,8 @@ bosch_bme280_driver = static_library('bosch_bme280_driver',
 		# We aren't fixing this vendor driver, so silence the warnings.
 		'-Wno-implicit-int-conversion',
 		'-Wno-sign-conversion'
-	]
+	],
+	build_by_default: meson.is_subproject() == false
 )
 
 bosch_bme280_driver_dep = declare_dependency(

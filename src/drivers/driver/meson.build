@@ -5,12 +5,12 @@ driver_lib_inc = [
 
 driver_lib = static_library('driver',
     'driver.cpp',
-    build_by_default: false,
+    build_by_default: meson.is_subproject() == false
 )
 
 driver_lib_native = static_library('driver_native',
     'driver.cpp',
-    build_by_default: false,
+    build_by_default: meson.is_subproject() == false
     native: true
 )
 

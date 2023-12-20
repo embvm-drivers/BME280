@@ -6,7 +6,8 @@ sparkfun_bme280_driver = static_library('sparkfun_bme280_driver',
 		'-Wno-shorten-64-to-32',
 		'-Wno-double-promotion',
 		'-Wno-implicit-float-conversion'
-	]
+	],
+	build_by_default: meson.is_subproject() == false
 )
 
 sparkfun_bme280_driver_dep = declare_dependency(
@@ -23,6 +24,7 @@ redesigned_sparkfun_bme280_driver = static_library('redesigned_sparkfun_bme280_d
 		'-Wno-shorten-64-to-32',
 		'-Wno-double-promotion'
 	],
+	build_by_default: meson.is_subproject() == false
 )
 
 redesigned_sparkfun_bme280_driver_dep = declare_dependency(

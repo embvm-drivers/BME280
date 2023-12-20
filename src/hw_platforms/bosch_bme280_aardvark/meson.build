@@ -9,6 +9,7 @@ bosch_bme280_aardvark_hardware_platform_lib = static_library('hardware_platform'
 		aardvark_vendor_native_driver_dep,
 		c_virtual_device_intf_dep
 	],
+	build_by_default: meson.is_subproject() == false,
 	native: true
 )
 
