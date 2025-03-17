@@ -11,7 +11,7 @@ project('BME280 Driver',
 		'c_std=c11', 'build.c_std=c11',
 		'cpp_std=c++17', 'build.cpp_std=c++17',
 	],
-	meson_version: '>=0.58.0',
+	meson_version: '>=1.1.0',
 	version: '0.1'
 )
 
