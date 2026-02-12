@@ -167,7 +167,7 @@ class BME280Internals
   public:
 	static void readCompensationData(BME280& inst)
 	{
-		auto calibration = inst.calibration;
+		auto& calibration = inst.calibration;
 		// Reading all compensation data, range 0x88:A1, 0xE1:E7
 		calibration.dig_T1 = ((uint16_t)((readRegister(inst, BME280_DIG_T1_MSB_REG) << 8) +
 										 readRegister(inst, BME280_DIG_T1_LSB_REG)));
