@@ -1,5 +1,6 @@
 # Generated Files
 **/buildresults/**
+compile_commands.json
 
 # Sublime-generated Files
 *.sublime-workspace
@@ -24,6 +25,9 @@ subprojects/gsl-lite.wrap
 ########################
 # C / C++ Ignore Rules #
 ########################
+
+# clangd
+.cache
 
 # Prerequisites
 *.d
