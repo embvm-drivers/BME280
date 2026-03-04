@@ -12,6 +12,9 @@
 #include <cstring>
 #endif
 
+#include "../SparkFunBME280_redesigned.h"
+#include "bme280_defs.hpp"
+
 static int32_t assembleRawTempPressure(uint8_t* bytes)
 {
 	return ((uint32_t)bytes[0] << 12) | ((uint32_t)bytes[1] << 4) | ((bytes[2] >> 4) & 0x0F);
@@ -167,43 +170,42 @@ class BME280Internals
   public:
 	static void readCompensationData(BME280& inst)
 	{
-		auto& calibration = inst.calibration;
 		// Reading all compensation data, range 0x88:A1, 0xE1:E7
-		calibration.dig_T1 = ((uint16_t)((readRegister(inst, BME280_DIG_T1_MSB_REG) << 8) +
+		inst.calibration.dig_T1 = ((uint16_t)((readRegister(inst, BME280_DIG_T1_MSB_REG) << 8) +
 										 readRegister(inst, BME280_DIG_T1_LSB_REG)));
-		calibration.dig_T2 = ((int16_t)((readRegister(inst, BME280_DIG_T2_MSB_REG) << 8) +
+		inst.calibration.dig_T2 = ((int16_t)((readRegister(inst, BME280_DIG_T2_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_T2_LSB_REG)));
-		calibration.dig_T3 = ((int16_t)((readRegister(inst, BME280_DIG_T3_MSB_REG) << 8) +
+		inst.calibration.dig_T3 = ((int16_t)((readRegister(inst, BME280_DIG_T3_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_T3_LSB_REG)));
 
-		calibration.dig_P1 = ((uint16_t)((readRegister(inst, BME280_DIG_P1_MSB_REG) << 8) +
+		inst.calibration.dig_P1 = ((uint16_t)((readRegister(inst, BME280_DIG_P1_MSB_REG) << 8) +
 										 readRegister(inst, BME280_DIG_P1_LSB_REG)));
-		calibration.dig_P2 = ((int16_t)((readRegister(inst, BME280_DIG_P2_MSB_REG) << 8) +
+		inst.calibration.dig_P2 = ((int16_t)((readRegister(inst, BME280_DIG_P2_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_P2_LSB_REG)));
-		calibration.dig_P3 = ((int16_t)((readRegister(inst, BME280_DIG_P3_MSB_REG) << 8) +
+		inst.calibration.dig_P3 = ((int16_t)((readRegister(inst, BME280_DIG_P3_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_P3_LSB_REG)));
-		calibration.dig_P4 = ((int16_t)((readRegister(inst, BME280_DIG_P4_MSB_REG) << 8) +
+		inst.calibration.dig_P4 = ((int16_t)((readRegister(inst, BME280_DIG_P4_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_P4_LSB_REG)));
-		calibration.dig_P5 = ((int16_t)((readRegister(inst, BME280_DIG_P5_MSB_REG) << 8) +
+		inst.calibration.dig_P5 = ((int16_t)((readRegister(inst, BME280_DIG_P5_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_P5_LSB_REG)));
-		calibration.dig_P6 = ((int16_t)((readRegister(inst, BME280_DIG_P6_MSB_REG) << 8) +
+		inst.calibration.dig_P6 = ((int16_t)((readRegister(inst, BME280_DIG_P6_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_P6_LSB_REG)));
-		calibration.dig_P7 = ((int16_t)((readRegister(inst, BME280_DIG_P7_MSB_REG) << 8) +
+		inst.calibration.dig_P7 = ((int16_t)((readRegister(inst, BME280_DIG_P7_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_P7_LSB_REG)));
-		calibration.dig_P8 = ((int16_t)((readRegister(inst, BME280_DIG_P8_MSB_REG) << 8) +
+		inst.calibration.dig_P8 = ((int16_t)((readRegister(inst, BME280_DIG_P8_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_P8_LSB_REG)));
-		calibration.dig_P9 = ((int16_t)((readRegister(inst, BME280_DIG_P9_MSB_REG) << 8) +
+		inst.calibration.dig_P9 = ((int16_t)((readRegister(inst, BME280_DIG_P9_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_P9_LSB_REG)));
 
-		calibration.dig_H1 = ((uint8_t)(readRegister(inst, BME280_DIG_H1_REG)));
-		calibration.dig_H2 = ((int16_t)((readRegister(inst, BME280_DIG_H2_MSB_REG) << 8) +
+		inst.calibration.dig_H1 = ((uint8_t)(readRegister(inst, BME280_DIG_H1_REG)));
+		inst.calibration.dig_H2 = ((int16_t)((readRegister(inst, BME280_DIG_H2_MSB_REG) << 8) +
 										readRegister(inst, BME280_DIG_H2_LSB_REG)));
-		calibration.dig_H3 = ((uint8_t)(readRegister(inst, BME280_DIG_H3_REG)));
-		calibration.dig_H4 = ((int16_t)((readRegister(inst, BME280_DIG_H4_MSB_REG) << 4) +
+		inst.calibration.dig_H3 = ((uint8_t)(readRegister(inst, BME280_DIG_H3_REG)));
+		inst.calibration.dig_H4 = ((int16_t)((readRegister(inst, BME280_DIG_H4_MSB_REG) << 4) +
 										(readRegister(inst, BME280_DIG_H4_LSB_REG) & 0x0F)));
-		calibration.dig_H5 = ((int16_t)((readRegister(inst, BME280_DIG_H5_MSB_REG) << 4) +
+		inst.calibration.dig_H5 = ((int16_t)((readRegister(inst, BME280_DIG_H5_MSB_REG) << 4) +
 										((readRegister(inst, BME280_DIG_H4_LSB_REG) >> 4) & 0x0F)));
-		calibration.dig_H6 = ((int8_t)readRegister(inst, BME280_DIG_H6_REG));
+		inst.calibration.dig_H6 = ((int8_t)readRegister(inst, BME280_DIG_H6_REG));
 	}
 
 	static bool checkChipID(const BME280& inst)
