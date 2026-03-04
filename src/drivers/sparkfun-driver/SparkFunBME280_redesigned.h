@@ -277,7 +277,13 @@ class BME280
 		int16_t dig_H4;
 		int16_t dig_H5;
 		int8_t dig_H6;
+
+		SensorCalibration(const SensorCalibration&) = delete;
+		SensorCalibration& operator=(const SensorCalibration&) = delete;
 	};
+
+	BME280(const BME280&) = delete;
+	BME280& operator=(const BME280&) = delete;
 
   private:
 	/// Selection of I2C/SPI communication interface
@@ -291,7 +297,7 @@ class BME280
 	/// Optional user-specified private data pointer that will be supplied to the
 	/// read_ and write_ abstractions
 	void* private_data_ = nullptr;
-	SensorCalibration calibration;
+	SensorCalibration calibration{};
 	int32_t t_fine;
 
 	// This class handles some internal details, keeping these interfaces out
